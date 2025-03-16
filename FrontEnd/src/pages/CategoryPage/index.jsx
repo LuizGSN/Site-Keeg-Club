@@ -1,0 +1,83 @@
+import styled from 'styled-components';
+import { useParams } from 'react-router-dom';
+import { PostCard } from '../HomePage/PostCard';
+import { theme } from '../../GlobalStyles';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+
+const Container = styled.div`
+  max-width: ${theme.sizes.maxWidth};
+  margin: 0 auto;
+  padding: 4rem 2rem;
+`;
+
+const Title = styled.h1`
+  color: ${theme.colors.primary};
+  margin-bottom: 3rem;
+`;
+
+const Grid = styled.div`
+  display: grid;
+  gap: 3rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+`;
+
+export const CategoryPage = () => {
+  const { category } = useParams(); // Extrai a categoria da URL
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Carregar os posts da API com base na categoria
+  useEffect(() => {
+    const fetchCategoryPosts = async () => {
+      setLoading(true);
+      try {
+        // Passa a categoria como parâmetro de query
+        const response = await axios.get(`http://localhost:3001/posts?categoria=${category}`);
+        
+        // Verifique se a estrutura da resposta está correta
+        if (response.data && Array.isArray(response.data.posts)) {
+          setPosts(response.data.posts);
+        } else {
+          console.error('Posts não encontrados na resposta da API');
+          setPosts([]);  // Garantir que a variável posts não seja indefinida
+        }
+      } catch (err) {
+        console.error("Erro ao carregar posts por categoria", err);
+        setPosts([]);  // Caso haja erro, ainda garantimos que a variável posts seja um array vazio
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategoryPosts();
+  }, [category]); // A categoria vai ser reanalisada sempre que mudar a URL
+
+  if (loading) {
+    return <Container>Carregando posts...</Container>;
+  }
+
+  if (!posts.length) {
+    return <Container>Não há posts para esta categoria.</Container>;
+  }
+
+  return (
+    <Container>
+      <Title>Posts sobre {category}</Title>
+      <Grid>
+        {posts.map((post) => (
+          <PostCard
+            key={post.id}
+            post={{
+              ...post,
+              categoria: post.categoria, // Certifique-se de que o backend retorna "categoria"
+              resumo: post.resumo, // Certifique-se de que o backend retorna "resumo"
+              imagem: post.imagem, // Certifique-se de que o backend retorna "imagem"
+              tags: post.tags || [], // Garante que tags seja um array
+            }}
+          />
+        ))}
+      </Grid>
+    </Container>
+  );
+};
