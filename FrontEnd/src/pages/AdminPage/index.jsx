@@ -119,6 +119,23 @@ const PageNumber = styled.span`
   color: ${theme.colors.text};
 `;
 
+const LogoutButton = styled.button`
+  background-color: ${theme.colors.primary};
+  color: ${theme.colors.text};
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+
+  &:hover {
+    background-color: ${theme.colors.secondary};
+  }
+`;
+
 const AdminPage = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -188,13 +205,18 @@ const AdminPage = () => {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("token"); // Remove o token de autenticação
+    navigate("/login"); // Redireciona para a página de login
+  };
+
   useEffect(() => {
     loadPosts(currentPage);
   }, [currentPage]);
-  
 
   return (
     <Container>
+      <LogoutButton onClick={handleLogout}>Logout</LogoutButton> {/* Botão de logout */}
       <Title>Keeg Club</Title>
       <Button onClick={handleCreatePost}>NOVA POSTAGEM</Button>
 

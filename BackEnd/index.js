@@ -115,7 +115,7 @@ app.get("/posts", (req, res) => {
   }
 
   if (q) {
-    conditions.push("(titulo LIKE ? OR conteudo LIKE ? OR resumo LIKE ?)");
+    conditions.push("(titulo LIKE ? OR resumo LIKE ? OR categoria LIKE ?)");
     params.push(`%${q}%`, `%${q}%`, `%${q}%`);
   }
 

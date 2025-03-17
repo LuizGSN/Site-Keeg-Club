@@ -29,10 +29,13 @@ function App() {
     }
   }, [location.pathname]);
 
+  // Verifica se a rota atual é uma página de administração ou a página de login
+  const hideNavbarAndFooter = location.pathname.startsWith("/admin") || location.pathname === "/login";
+
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyles />
-      <Navbar />
+      {!hideNavbarAndFooter && <Navbar />} {/* Renderiza o Navbar apenas se não for uma página de admin ou login */}
       <main style={{ minHeight: 'calc(100vh - 160px)' }}>
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -45,7 +48,7 @@ function App() {
           <Route path="/admin/edit/:id" element={<EditPost />} />
         </Routes>
       </main>
-      <Footer />
+      {!hideNavbarAndFooter && <Footer />} {/* Renderiza o Footer apenas se não for uma página de admin ou login */}
     </ThemeProvider>
   );
 }
