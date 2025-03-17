@@ -17,6 +17,7 @@ const FooterContent = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 3rem;
+  align-items: start;
 `;
 
 const Section = styled.div`
@@ -24,6 +25,31 @@ const Section = styled.div`
     color: ${theme.colors.primary};
     margin-bottom: 1.5rem;
     font-family: ${theme.fonts.secondary};
+    font-size: 1.8rem;
+  }
+
+  p {
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+
+    li {
+      margin-bottom: 1rem;
+
+      a {
+        color: ${theme.colors.light};
+        text-decoration: none;
+        transition: color 0.3s;
+
+        &:hover {
+          color: ${theme.colors.primary};
+        }
+      }
+    }
   }
 `;
 
@@ -53,6 +79,7 @@ const NewsletterForm = styled.form`
     padding: 1rem;
     border: none;
     border-radius: 4px;
+    font-size: 1.4rem;
   }
 
   button {
@@ -63,6 +90,7 @@ const NewsletterForm = styled.form`
     border-radius: 4px;
     cursor: pointer;
     transition: background 0.3s;
+    font-size: 1.4rem;
 
     &:hover {
       background: #FF4500;
@@ -75,6 +103,7 @@ const Copyright = styled.div`
   margin-top: 4rem;
   padding-top: 2rem;
   border-top: 1px solid ${theme.colors.tertiary};
+  font-size: 1.4rem;
 `;
 
 export const Footer = () => {
@@ -125,7 +154,6 @@ export const Footer = () => {
   return (
     <FooterContainer>
       <FooterContent>
-        {/* Seção 1: Logo e Slogan */}
         <Section>
           <h3>Keeg Club</h3>
           <p>Sua fonte de conteúdos nerds</p>
@@ -137,7 +165,6 @@ export const Footer = () => {
           </SocialIcons>
         </Section>
 
-        {/* Seção 2: Categorias */}
         <Section>
           <h3>Categorias</h3>
           <ul>
@@ -149,7 +176,16 @@ export const Footer = () => {
           </ul>
         </Section>
 
-        {/* Seção 3: Newsletter */}
+        <Section>
+          <h3>Links Úteis</h3>
+          <ul>
+            <li><Link to="/politica-de-privacidade">Política de Privacidade</Link></li>
+            <li><Link to="/termos-de-uso">Termos de Uso</Link></li>
+            <li><Link to="/sobre">Sobre Nós</Link></li>
+            <li><Link to="/contato">Contato</Link></li>
+          </ul>
+        </Section>
+
         <Section>
           <h3>Newsletter</h3>
           <p>Receba as novidades por email</p>

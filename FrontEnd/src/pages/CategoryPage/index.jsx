@@ -23,7 +23,7 @@ const Grid = styled.div`
 `;
 
 export const CategoryPage = () => {
-  const { category } = useParams(); // Extrai a categoria da URL
+  const { category } = useParams();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -32,35 +32,31 @@ export const CategoryPage = () => {
     const fetchCategoryPosts = async () => {
       setLoading(true);
       try {
-        // Passa a categoria como parâmetro de query
         const response = await axios.get(`http://localhost:3001/posts?categoria=${category}`);
-        
-        // Verifique se a estrutura da resposta está correta
+              
         if (response.data && Array.isArray(response.data.posts)) {
           setPosts(response.data.posts);
         } else {
           console.error('Posts não encontrados na resposta da API');
-          setPosts([]);  // Garantir que a variável posts não seja indefinida
+          setPosts([]);
         }
       } catch (err) {
         console.error("Erro ao carregar posts por categoria", err);
-        setPosts([]);  // Caso haja erro, ainda garantimos que a variável posts seja um array vazio
+        setPosts([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchCategoryPosts();
-  }, [category]); // A categoria vai ser reanalisada sempre que mudar a URL
+  }, [category]);
 
   if (loading) {
     return <Container>Carregando posts...</Container>;
   }
-
   if (!posts.length) {
     return <Container>Não há posts para esta categoria.</Container>;
   }
-
   return (
     <Container>
       <Title>Posts sobre {category}</Title>
@@ -70,10 +66,10 @@ export const CategoryPage = () => {
             key={post.id}
             post={{
               ...post,
-              categoria: post.categoria, // Certifique-se de que o backend retorna "categoria"
-              resumo: post.resumo, // Certifique-se de que o backend retorna "resumo"
-              imagem: post.imagem, // Certifique-se de que o backend retorna "imagem"
-              tags: post.tags || [], // Garante que tags seja um array
+              categoria: post.categoria,
+              resumo: post.resumo,
+              imagem: post.imagem,
+              tags: post.tags || [],
             }}
           />
         ))}

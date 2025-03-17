@@ -183,7 +183,6 @@ const AdminPage = () => {
         },
       });
 
-      // Recarrega os posts após a exclusão
       loadPosts(currentPage);
     } catch (err) {
       console.error("Erro ao excluir post:", err);
@@ -206,8 +205,8 @@ const AdminPage = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token"); // Remove o token de autenticação
-    navigate("/login"); // Redireciona para a página de login
+    localStorage.removeItem("token");
+    navigate("/login");
   };
 
   useEffect(() => {
@@ -216,7 +215,7 @@ const AdminPage = () => {
 
   return (
     <Container>
-      <LogoutButton onClick={handleLogout}>Logout</LogoutButton> {/* Botão de logout */}
+      <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
       <Title>Keeg Club</Title>
       <Button onClick={handleCreatePost}>NOVA POSTAGEM</Button>
 

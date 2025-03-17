@@ -21,7 +21,6 @@ const Tag = styled(Link)`
   }
 `;
 
-// Use assim:
 <TagList>
   {post.tags.map((tag) => (
     <Tag key={tag} to={`/tag/${tag}`}>{tag}</Tag>

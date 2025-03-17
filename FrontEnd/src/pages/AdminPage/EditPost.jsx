@@ -78,7 +78,7 @@ const EditPost = () => {
         const response = await axios.get(`http://localhost:3001/posts/${id}`);
         setPost({
           ...response.data,
-          tags: response.data.tags || [], // Garante que tags seja um array
+          tags: response.data.tags || [],
         });
       } catch (error) {
         console.error("Erro ao buscar o post:", error);
@@ -98,7 +98,7 @@ const EditPost = () => {
         `http://localhost:3001/posts/${id}`,
         {
           ...post,
-          tags: post.tags, // Envia as tags como um array
+          tags: post.tags,
         },
         {
           headers: {
@@ -106,7 +106,7 @@ const EditPost = () => {
           },
         }
       );
-      navigate("/admin"); // Redireciona para o painel após a edição
+      navigate("/admin");
     } catch (error) {
       console.error("Erro ao atualizar o post:", error);
     }
@@ -159,7 +159,7 @@ const EditPost = () => {
           type="text"
           name="tags"
           placeholder="Tags (separadas por vírgula)"
-          value={post.tags.join(", ")} // Converte o array de tags em uma string
+          value={post.tags.join(", ")}
           onChange={(e) =>
             setPost({ ...post, tags: e.target.value.split(",").map(tag => tag.trim()) })
           }

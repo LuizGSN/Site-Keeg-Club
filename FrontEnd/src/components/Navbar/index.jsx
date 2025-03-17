@@ -51,7 +51,6 @@ const MenuLink = styled(Link)`
 `;
 
 export const Navbar = () => {
-  // Defina as categorias exatamente como estão no banco de dados
   const categories = ['Animes', 'Filmes', 'Séries', 'Jogos'];
 
   return (
@@ -60,7 +59,7 @@ export const Navbar = () => {
         <Logo to="/">Keeg Club</Logo>
         <Menu>
           {categories.map((category) => (
-            <MenuLink key={category} to={`/category/${category}`}> {/* Removido toLowerCase() */}
+            <MenuLink key={category} to={`/category/${category}`}>
               {category}
             </MenuLink>
           ))}

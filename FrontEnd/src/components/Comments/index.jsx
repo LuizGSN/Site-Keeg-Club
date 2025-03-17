@@ -49,16 +49,15 @@ export const CommentForm = ({ postId }) => {
   const [comment, setComment] = useState('');
   const [authorName, setAuthorName] = useState('');
   const [error, setError] = useState('');
-  const [comments, setComments] = useState([]); // Estado para armazenar os comentários
+  const [comments, setComments] = useState([]);
 
-  // Buscar comentários ao carregar o componente ou quando o postId mudar
   useEffect(() => {
     const fetchComments = async () => {
       try {
         const response = await fetch(`http://localhost:3001/posts/${postId}/comments`);
         if (response.ok) {
           const data = await response.json();
-          setComments(data);  // Armazenar os comentários no estado
+          setComments(data);
         } else {
           console.error('Erro ao carregar comentários');
         }
@@ -68,7 +67,7 @@ export const CommentForm = ({ postId }) => {
     };
 
     fetchComments();
-  }, [postId]); // Reexecuta sempre que o postId mudar
+  }, [postId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -101,7 +100,7 @@ export const CommentForm = ({ postId }) => {
 
       if (response.ok) {
         const newComment = await response.json();
-        setComments([newComment, ...comments]);  // Adicionar o novo comentário ao início da lista
+        setComments([newComment, ...comments]);
         setComment('');
         setAuthorName('');
       } else {
@@ -132,7 +131,6 @@ export const CommentForm = ({ postId }) => {
         <button type="submit">Enviar Comentário</button>
       </CommentFormStyled>
 
-      {/* Exibir comentários */}
       <CommentListStyled>
         {comments.length === 0 ? (
           <p>Seja o primeiro a comentar!</p>

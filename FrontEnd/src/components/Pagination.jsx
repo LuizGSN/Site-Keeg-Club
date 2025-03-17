@@ -26,7 +26,6 @@ const PageButton = styled.button`
 export const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   return (
     <PaginationContainer>
-      {/* Botão "Anterior" */}
       <PageButton
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
@@ -34,7 +33,6 @@ export const Pagination = ({ currentPage, totalPages, onPageChange }) => {
         Anterior
       </PageButton>
       
-      {/* Botões de página */}
       {[...Array(totalPages)].map((_, index) => (
         <PageButton
           key={index}
@@ -45,7 +43,6 @@ export const Pagination = ({ currentPage, totalPages, onPageChange }) => {
         </PageButton>
       ))}
       
-      {/* Botão "Próximo" */}
       <PageButton
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}

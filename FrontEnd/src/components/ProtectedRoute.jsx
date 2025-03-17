@@ -7,11 +7,11 @@ const ProtectedRoute = ({ children }) => {
 
   useEffect(() => {
     if (!token) {
-      navigate("/login"); // Redireciona para a página de login se o token não existir
+      navigate("/login");
     }
   }, [token, navigate]);
 
-  return token ? children : null; // Renderiza o conteúdo apenas se o token existir
+  return token ? children : null;
 };
 
 export default ProtectedRoute;

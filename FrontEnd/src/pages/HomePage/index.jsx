@@ -3,7 +3,7 @@ import { PostCard } from './PostCard';
 import { theme } from '../../GlobalStyles';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Pagination } from '../../components/Pagination'; // Importe o componente Pagination
+import { Pagination } from '../../components/Pagination';
 
 const Container = styled.div`
   max-width: ${theme.sizes.maxWidth};
@@ -19,19 +19,17 @@ const Grid = styled.div`
 
 export const HomePage = () => {
   const [posts, setPosts] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1); // Estado para a página atual
-  const [totalPages, setTotalPages] = useState(1); // Estado para o total de páginas
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  // Função para buscar os posts
   const fetchPosts = async (page) => {
     try {
       const res = await axios.get(`http://localhost:3001/posts?page=${page}&limit=6`);
       console.log("Resposta da API:", res.data);
 
-      // Verifica se a resposta contém os dados esperados
       if (res.data && Array.isArray(res.data.posts)) {
         setPosts(res.data.posts);
-        setTotalPages(res.data.totalPages); // Atualiza o total de páginas
+        setTotalPages(res.data.totalPages);
       } else {
         console.error("Resposta da API inválida:", res.data);
         setPosts([]);
@@ -44,12 +42,10 @@ export const HomePage = () => {
     }
   };
 
-  // Busca os posts quando a página muda
   useEffect(() => {
     fetchPosts(currentPage);
   }, [currentPage]);
 
-  // Função para mudar de página
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
   };
@@ -75,8 +71,7 @@ export const HomePage = () => {
           ))
         )}
       </Grid>
-
-      {/* Componente de Paginação */}
+      
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import axios from "axios";
-import { theme } from "../../GlobalStyles"; // Importando o tema global
+import { theme } from "../../GlobalStyles";
 
 const Container = styled.div`
   display: flex;
@@ -75,7 +75,7 @@ const LoginPage = () => {
     try {
       const res = await axios.post("http://localhost:3001/login", { email, senha });
       localStorage.setItem("token", res.data.token);
-      navigate("/admin"); // Redireciona para o painel administrativo
+      navigate("/admin");
     } catch (err) {
       setErro("Credenciais inválidas. Tente novamente.");
     }

@@ -31,7 +31,6 @@ export const SearchPage = () => {
       return;
     }
 
-    // Função para buscar posts do backend
     const fetchPosts = async () => {
       try {
         const response = await fetch(`http://localhost:3001/posts?q=${query}`);
@@ -50,7 +49,6 @@ export const SearchPage = () => {
     fetchPosts();
   }, [query]);
 
-  // Verificação para queries vazias
   if (!query) {
     return (
       <Container>

@@ -2,7 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import { theme } from "../../GlobalStyles";  // Certifique-se de que o tema está sendo importado
+import { theme } from "../../GlobalStyles";
 
 const Container = styled.div`
   display: flex;
@@ -91,7 +91,7 @@ const CreatePost = () => {
           categoria,
           resumo,
           imagem,
-          tags: tags.split(",").map(tag => tag.trim()), // Converte a string de tags em um array
+          tags: tags.split(",").map(tag => tag.trim()),
         },
         {
           headers: {

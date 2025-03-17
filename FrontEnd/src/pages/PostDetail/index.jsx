@@ -91,10 +91,9 @@ export const PostDetail = () => {
     fetchPostData();
   }, [id]);
 
-  // Atualiza o título da página com o título do post
   useEffect(() => {
     if (post && post.titulo) {
-      document.title = post.titulo; // Define o título da página como o título do post
+      document.title = post.titulo;
     }
   }, [post]);
 

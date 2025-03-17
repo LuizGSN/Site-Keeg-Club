@@ -13,12 +13,15 @@ import EditPost from "./pages/AdminPage/EditPost";
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Footer } from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
+import { PrivacyPolicy } from './pages/FooterPage/PrivacyPolicy';
+import { TermsOfUse } from './pages/FooterPage/TermsOfUse';
+import { About } from './pages/FooterPage/About';
+import { Contact } from './pages/FooterPage/Contact';
 
 function App() {
   const location = useLocation();
 
   useEffect(() => {
-    // Define o título da página com base na rota atual
     if (location.pathname === "/") {
       document.title = "Keeg Club";
     } else if (location.pathname === "/login") {
@@ -30,13 +33,12 @@ function App() {
     }
   }, [location.pathname]);
 
-  // Verifica se a rota atual é uma página de administração ou a página de login
   const hideNavbarAndFooter = location.pathname.startsWith("/admin") || location.pathname === "/login";
 
   return (
     <ThemeProvider theme={theme}>
       <GlobalStyles />
-      {!hideNavbarAndFooter && <Navbar />} {/* Renderiza o Navbar apenas se não for uma página de admin ou login */}
+      {!hideNavbarAndFooter && <Navbar />}
       <main style={{ minHeight: 'calc(100vh - 160px)' }}>
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -47,14 +49,17 @@ function App() {
           <Route path="/admin" element={<ProtectedRoute> <AdminPage /> </ProtectedRoute>}/>
           <Route path="/admin/create" element={<ProtectedRoute> <CreatePost /> </ProtectedRoute>} />
           <Route path="/admin/edit/:id" element={<ProtectedRoute> <EditPost /> </ProtectedRoute>} />
+          <Route path="/politica-de-privacidade" element={<PrivacyPolicy />} />
+          <Route path="/termos-de-uso" element={<TermsOfUse />} />
+          <Route path="/sobre" element={<About />} />
+          <Route path="/contato" element={<Contact />} />
         </Routes>
       </main>
-      {!hideNavbarAndFooter && <Footer />} {/* Renderiza o Footer apenas se não for uma página de admin ou login */}
+      {!hideNavbarAndFooter && <Footer />}
     </ThemeProvider>
   );
 }
 
-// Wrapper para usar useLocation no componente App
 function AppWrapper() {
   return (
     <Router>
