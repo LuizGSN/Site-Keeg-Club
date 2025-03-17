@@ -12,6 +12,7 @@ import CreatePost from "./pages/AdminPage/CreatePost";
 import EditPost from "./pages/AdminPage/EditPost";
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Footer } from './components/Footer';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   const location = useLocation();
@@ -43,9 +44,9 @@ function App() {
           <Route path="/post/:id" element={<PostDetail />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/admin" element={<AdminPage />} />
-          <Route path="/admin/create" element={<CreatePost />} />
-          <Route path="/admin/edit/:id" element={<EditPost />} />
+          <Route path="/admin" element={<ProtectedRoute> <AdminPage /> </ProtectedRoute>}/>
+          <Route path="/admin/create" element={<ProtectedRoute> <CreatePost /> </ProtectedRoute>} />
+          <Route path="/admin/edit/:id" element={<ProtectedRoute> <EditPost /> </ProtectedRoute>} />
         </Routes>
       </main>
       {!hideNavbarAndFooter && <Footer />} {/* Renderiza o Footer apenas se não for uma página de admin ou login */}
