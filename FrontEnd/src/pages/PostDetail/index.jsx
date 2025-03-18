@@ -24,22 +24,32 @@ const Container = styled.div`
   padding: 4rem 2rem;
 `;
 
+const PostHeader = styled.div`
+  max-width: 700px; // Mesma largura máxima da imagem
+  margin: 0 auto; // Centraliza o contêiner
+`;
+
 const PostTitle = styled.h1`
   color: ${theme.colors.text};
   margin-bottom: 2rem;
+  text-align: center; // Centraliza o título
 `;
 
 const PostImage = styled.img`
   width: 100%;
-  max-height: 500px;
+  max-width: 700px; // Largura máxima da imagem
+  height: auto; // Mantém a proporção
   object-fit: cover;
   border-radius: 8px;
-  margin-bottom: 3rem;
+  margin: 0 auto 3rem; // Centraliza a imagem e adiciona margem inferior
+  display: block; // Garante que a margem automática funcione
 `;
 
 const PostContent = styled.article`
   background: ${theme.colors.tertiary};
-  padding: 3rem;
+  max-width: 700px; // Mesma largura máxima da imagem
+  margin: 0 auto; // Centraliza o conteúdo
+  padding: 5rem 2rem; // Padding responsivo
   border-radius: 8px;
   margin-bottom: 4rem;
 
@@ -54,6 +64,7 @@ const MetaData = styled.div`
   gap: 2rem;
   margin-bottom: 2rem;
   color: ${theme.colors.primary};
+  justify-content: center; // Centraliza os metadados
 `;
 
 export const PostDetail = () => {
@@ -111,8 +122,10 @@ export const PostDetail = () => {
 
   return (
     <Container>
-      <PostTitle>{post.titulo}</PostTitle>
-      <PostImage src={post.imagem} alt={post.titulo} />
+      <PostHeader>
+        <PostTitle>{post.titulo}</PostTitle>
+        <PostImage src={post.imagem} alt={post.titulo} />
+      </PostHeader>
       <MetaData>
         <span>Categoria: {post.categoria}</span>
         <span>

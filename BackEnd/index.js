@@ -3,14 +3,47 @@ const cors = require("cors");
 const db = require("./database");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Configuração do Multer para upload de imagens
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      const uploadPath = path.join(__dirname, 'public', 'uploads');
+      if (!fs.existsSync(uploadPath)) {
+        fs.mkdirSync(uploadPath, { recursive: true });
+      }
+      cb(null, uploadPath);
+    },
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const ext = path.extname(file.originalname);
+      cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+    },
+  });
+  
+  const upload = multer({ storage });
+
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+
+// Rota para upload de imagens
+app.post('/upload', upload.single('file'), (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ erro: "Nenhum arquivo enviado" });
+    }
+  
+    const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    res.json({ location: imageUrl });
+  });
+  
 
 // Rota de autenticação Middleware
 const verificaToken = (req, res, next) => {
@@ -92,11 +125,6 @@ app.post("/posts/:id/comments", (req, res) => {
 // Rota de teste
 app.get("/", (req, res) => {
   res.send("API do blog funcionando! 🚀");
-});
-
-// Iniciar o servidor
-app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
 });
 
 // Rota para listar posts com busca
@@ -453,4 +481,9 @@ app.get("/newsletter", (req, res) => {
       }
       res.json(rows);
     });
+  });
+
+  // Iniciar o servidor
+app.listen(PORT, () => {
+    console.log(`Servidor rodando na porta ${PORT}`);
   });

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import styled from "styled-components";
 import axios from "axios";
 import { theme } from "../../GlobalStyles";
+import { RichTextEditor } from '../../components/RichTextEditor';
 
 const Container = styled.div`
   display: flex;
@@ -124,12 +125,9 @@ const EditPost = () => {
           onChange={handleChange}
           required
         />
-        <Textarea
-          name="conteudo"
-          placeholder="Conteúdo"
-          value={post.conteudo}
-          onChange={handleChange}
-          required
+        <RichTextEditor
+          initialValue={post.conteudo}
+          onEditorChange={(newContent) => setPost({ ...post, conteudo: newContent })}
         />
         <Input
           type="text"
