@@ -8,7 +8,7 @@ import { Pagination } from '../../components/Pagination';
 const Container = styled.div`
   max-width: ${theme.sizes.maxWidth};
   margin: 0 auto;
-  padding: 4rem 2rem;
+  padding: 8rem 2rem;
 `;
 
 const Grid = styled.div`
@@ -52,7 +52,6 @@ export const HomePage = () => {
 
   return (
     <Container>
-      <h1>Últimas Postagens</h1>
       <Grid>
         {posts.length === 0 ? (
           <p>Nenhum post encontrado.</p>

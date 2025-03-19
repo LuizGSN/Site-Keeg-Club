@@ -13,23 +13,50 @@ const CommentFormStyled = styled.form`
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
+  max-width: 600px;
+
+  input,
+  textarea {
+    padding: 0.8rem;
+    border: 1px solid ${theme.colors.secondary};
+    border-radius: 12px;
+    background: ${theme.colors.dark};
+    color: ${theme.colors.text};
+    font-family: ${theme.fonts.primary};
+    font-size: ${theme.fontSizes.base};
+
+    &::placeholder {
+      color: ${theme.colors.text};
+      opacity: 0.7;
+    }
+  }
 
   textarea {
-    height: 150px;
+    height: 100px;
     resize: vertical;
   }
 
-  input {
-    height: 40px;
-    padding: 0.5rem;
-    border-radius: 4px;
-    border: 1px solid #ccc;
+  button {
+    padding: 0.8rem;
+    background: ${theme.colors.primary};
+    color: ${theme.colors.text};
+    border: none;
+    border-radius: 12px;
+    font-family: ${theme.fonts.primary};
+    font-size: ${theme.fontSizes.base};
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+
+    &:hover {
+      background: ${theme.colors.secondary};
+    }
   }
 
   .error {
-    color: red;
-    font-size: 0.9rem;
+    color: #ff4d4d;
+    font-size: ${theme.fontSizes.small};
+    margin-top: 0.5rem;
   }
 `;
 
@@ -37,12 +64,34 @@ const CommentListStyled = styled.div`
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  max-width: 600px;
 `;
 
 const CommentItem = styled.div`
   padding: 1.5rem;
   background: ${theme.colors.dark};
   border-radius: 6px;
+  border: 1px solid ${theme.colors.secondary};
+
+  strong {
+    font-family: ${theme.fonts.secondary};
+    font-size: ${theme.fontSizes.medium};
+    color: ${theme.colors.primary};
+  }
+
+  p {
+    font-family: ${theme.fonts.primary};
+    font-size: ${theme.fontSizes.base};
+    color: ${theme.colors.text};
+    margin: 1rem 0;
+  }
+
+  small {
+    font-family: ${theme.fonts.primary};
+    font-size: ${theme.fontSizes.small};
+    color: ${theme.colors.text};
+    opacity: 0.8;
+  }
 `;
 
 export const CommentForm = ({ postId }) => {
@@ -137,9 +186,9 @@ export const CommentForm = ({ postId }) => {
         ) : (
           comments.map((comment) => (
             <CommentItem key={comment.id}>
-              <strong>{comment.author_name}</strong>
+              <strong>{comment.author_name || 'Anônimo'}</strong>
               <p>{comment.text}</p>
-              <small>{new Date(comment.date).toLocaleString()}</small>
+              <small>{new Date(comment.date).toLocaleString('pt-BR')}</small>
             </CommentItem>
           ))
         )}

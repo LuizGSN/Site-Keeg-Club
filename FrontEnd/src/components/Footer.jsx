@@ -18,6 +18,11 @@ const FooterContent = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 3rem;
   align-items: start;
+
+  @media (max-width: ${theme.breakpoints.md}) {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
 `;
 
 const Section = styled.div`
@@ -26,11 +31,13 @@ const Section = styled.div`
     margin-bottom: 1.5rem;
     font-family: ${theme.fonts.secondary};
     font-size: 1.8rem;
+    font-weight: 600;
   }
 
   p {
     margin-bottom: 1.5rem;
     line-height: 1.6;
+    color: ${theme.colors.textLight};
   }
 
   ul {
@@ -43,10 +50,11 @@ const Section = styled.div`
       a {
         color: ${theme.colors.light};
         text-decoration: none;
-        transition: color 0.3s;
+        transition: color 0.3s, transform 0.2s;
 
         &:hover {
           color: ${theme.colors.primary};
+          transform: translateX(5px);
         }
       }
     }
@@ -56,23 +64,28 @@ const Section = styled.div`
 const SocialIcons = styled.div`
   display: flex;
   gap: 1.5rem;
-  margin-top: 1rem;
+  margin-top: 1.5rem;
 
   a {
     color: ${theme.colors.light};
     font-size: 2.4rem;
-    transition: color 0.3s;
+    transition: color 0.3s, transform 0.2s;
 
     &:hover {
       color: ${theme.colors.primary};
+      transform: translateY(-3px);
     }
+  }
+
+  @media (max-width: ${theme.breakpoints.md}) {
+    justify-content: center;
   }
 `;
 
 const NewsletterForm = styled.form`
   display: flex;
   gap: 1rem;
-  margin-top: 1rem;
+  margin-top: 1.5rem;
 
   input {
     flex: 1;
@@ -80,6 +93,18 @@ const NewsletterForm = styled.form`
     border: none;
     border-radius: 4px;
     font-size: 1.4rem;
+    background: ${theme.colors.dark};
+    color: ${theme.colors.text};
+    transition: border-color 0.3s;
+
+    &:focus {
+      outline: none;
+      border-color: ${theme.colors.primary};
+    }
+
+    &::placeholder {
+      color: ${theme.colors.textLight};
+    }
   }
 
   button {
@@ -89,12 +114,18 @@ const NewsletterForm = styled.form`
     padding: 1rem 2rem;
     border-radius: 4px;
     cursor: pointer;
-    transition: background 0.3s;
+    transition: background 0.3s, transform 0.2s;
     font-size: 1.4rem;
 
     &:hover {
       background: #FF4500;
+      transform: translateY(-2px);
     }
+  }
+
+  @media (max-width: ${theme.breakpoints.md}) {
+    flex-direction: column;
+    align-items: center;
   }
 `;
 
@@ -104,6 +135,7 @@ const Copyright = styled.div`
   padding-top: 2rem;
   border-top: 1px solid ${theme.colors.tertiary};
   font-size: 1.4rem;
+  color: ${theme.colors.textLight};
 `;
 
 export const Footer = () => {

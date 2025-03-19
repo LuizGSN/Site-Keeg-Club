@@ -36,12 +36,16 @@ const Category = styled.span`
 
 const Title = styled.h2`
   font-family: ${theme.fonts.secondary};
+  font-size: ${theme.fontSizes.xlarge};
   color: ${theme.colors.text};
   margin-bottom: 1rem;
 `;
 
 const Excerpt = styled.p`
-  color: ${theme.colors.light};
+  font-family: ${theme.fonts.primary};
+  font-size: ${theme.fontSizes.base};
+  color: ${theme.colors.text};
+  line-height: 1.6;
   margin-bottom: 1.5rem;
   text-overflow: ellipsis;
   overflow: hidden;

@@ -25,31 +25,33 @@ const Container = styled.div`
 `;
 
 const PostHeader = styled.div`
-  max-width: 700px; // Mesma largura máxima da imagem
-  margin: 0 auto; // Centraliza o contêiner
+  max-width: 700px;
+  margin: 0 auto;
 `;
 
 const PostTitle = styled.h1`
-  color: ${theme.colors.text};
+  font-family: ${theme.fonts.secondary};
+  font-size: ${theme.fontSizes.xxlarge};
+  color: ${theme.colors.primary};
   margin-bottom: 2rem;
-  text-align: center; // Centraliza o título
+  text-align: center;
 `;
 
 const PostImage = styled.img`
   width: 100%;
-  max-width: 700px; // Largura máxima da imagem
-  height: auto; // Mantém a proporção
+  max-width: 700px;
+  height: auto;
   object-fit: cover;
   border-radius: 8px;
-  margin: 0 auto 3rem; // Centraliza a imagem e adiciona margem inferior
-  display: block; // Garante que a margem automática funcione
+  margin: 0 auto 3rem;
+  display: block;
 `;
 
 const PostContent = styled.article`
   background: ${theme.colors.tertiary};
-  max-width: 700px; // Mesma largura máxima da imagem
-  margin: 0 auto; // Centraliza o conteúdo
-  padding: 5rem 2rem; // Padding responsivo
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 5rem 2rem;
   border-radius: 8px;
   margin-bottom: 4rem;
 
@@ -64,7 +66,7 @@ const MetaData = styled.div`
   gap: 2rem;
   margin-bottom: 2rem;
   color: ${theme.colors.primary};
-  justify-content: center; // Centraliza os metadados
+  justify-content: center;
 `;
 
 export const PostDetail = () => {

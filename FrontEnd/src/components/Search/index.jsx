@@ -5,17 +5,28 @@ import { theme } from '../../GlobalStyles';
 
 const SearchContainer = styled.div`
   position: relative;
-  max-width: 400px;
+  max-width: 300px; // Reduzi a largura máxima
   margin-left: auto;
 `;
 
 const SearchInput = styled.input`
   width: 100%;
-  padding: 1rem 2rem;
+  padding: 0.75rem 1.5rem; // Ajustei o padding para um tamanho menor
   border-radius: 20px;
   border: 2px solid ${theme.colors.primary};
   background: ${theme.colors.dark};
   color: ${theme.colors.text};
+  font-size: ${theme.fontSizes.small}; // Usei um tamanho de fonte menor
+  transition: all 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: ${theme.colors.accent}; // Adicionei uma cor de destaque ao focar
+  }
+
+  &::placeholder {
+    color: ${theme.colors.textLight}; // Cor mais clara para o placeholder
+  }
 `;
 
 export const SearchBar = () => {

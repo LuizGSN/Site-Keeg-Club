@@ -12,6 +12,8 @@ const Container = styled.div`
 `;
 
 const Title = styled.h1`
+  font-family: ${theme.fonts.secondary};
+  font-size: ${theme.fontSizes.xxlarge};
   color: ${theme.colors.primary};
   margin-bottom: 3rem;
 `;
