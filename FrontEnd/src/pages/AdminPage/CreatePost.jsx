@@ -138,7 +138,9 @@ return (
   />
   <RichTextEditor
     initialValue={conteudo}
-    onEditorChange={(newContent) => setConteudo(newContent)}
+    onEditorChange={(newContent) => {
+      setConteudo(newContent); // Atualiza o estado no componente pai
+    }}
   />
   <Input
     type="text"
@@ -152,9 +154,9 @@ return (
     onChange={(e) => setResumo(e.target.value)}
   />
   <Input
-    type="file" // Alterado para upload de arquivo
-    accept="image/*" // Aceita apenas arquivos de imagem
-    onChange={(e) => setImagem(e.target.files[0])} // Armazena o arquivo selecionado
+    type="file"
+    accept="image/*"
+    onChange={(e) => setImagem(e.target.files[0])}
   />
   <Input
     type="text"

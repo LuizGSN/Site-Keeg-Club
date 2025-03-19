@@ -13,7 +13,7 @@ const Nav = styled.nav`
   align-items: center;
   z-index: 1000;
   padding: 0 2rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); // Sombra sutil
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 `;
 
 const NavContent = styled.div`
@@ -29,24 +29,20 @@ const Logo = styled(Link)`
   font-family: ${theme.fonts.secondary};
   font-size: 2.4rem;
   color: ${theme.colors.primary};
-  font-weight: 600; // Peso da fonte ajustado
+  font-weight: 600;
   text-decoration: none;
   transition: opacity 0.3s;
 
-  &:hover {
-    opacity: 0.8; // Efeito de opacidade ao passar o mouse
-  }
-
   img {
-    height: 80px; // Ajuste o tamanho da logo conforme necessário
+    height: 70px;
   }
 `;
 
 const Menu = styled.div`
   display: flex;
-  flex-grow: 1; // Ocupa o espaço disponível entre a logo e a barra de pesquisa
-  justify-content: center; // Centraliza os itens do menu
-  gap: 2rem; // Reduzi o espaçamento entre os links
+  flex-grow: 1;
+  justify-content: center;
+  gap: 2rem;
 
   @media (max-width: ${theme.breakpoints.md}) {
     display: none;
@@ -63,7 +59,7 @@ const MenuLink = styled(Link)`
 
   &:hover {
     color: ${theme.colors.primary};
-    transform: translateY(-2px); // Efeito de levantar ao passar o mouse
+    transform: translateY(-2px);
   }
 `;
 
@@ -74,7 +70,7 @@ export const Navbar = () => {
     <Nav>
       <NavContent>
         <Logo to="/">
-          <img src="/src/images/Keeg-Club-Png.png" alt="Keeg Club Logo" />
+          <img src="/src/images/Keeg-Club-Logo-Png.png" alt="Keeg Club Logo" />
         </Logo>
         <Menu>
           {categories.map((category) => (

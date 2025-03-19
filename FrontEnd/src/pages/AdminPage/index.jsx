@@ -250,7 +250,7 @@ const AdminPage = () => {
     <Container>
       <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
       <Title>
-        <img width={225} src="/src/images/Keeg-Club-Png.png" alt="Keeg Club logo" />
+        <img width={225} src="/src/images/Keeg-Club-Logo-Png.png" alt="Keeg Club logo" />
       </Title>
       <Button onClick={handleCreatePost}>NOVA POSTAGEM</Button>
 

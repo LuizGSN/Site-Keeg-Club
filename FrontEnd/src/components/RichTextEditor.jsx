@@ -16,13 +16,13 @@ export const RichTextEditor = ({ initialValue, onEditorChange }) => {
           'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview', 'anchor',
           'searchreplace', 'visualblocks', 'code', 'fullscreen',
           'insertdatetime', 'media', 'table', 'help', 'wordcount',
-          'image', // Plugin de imagens
+          'image',
         ],
         toolbar:
           'undo redo | formatselect | bold italic backcolor | \
           alignleft aligncenter alignright alignjustify | \
           bullist numlist outdent indent | removeformat | help | image',
-        images_upload_url: 'http://localhost:3001/upload', // Endpoint para upload de imagens
+        images_upload_url: 'http://localhost:3001/upload',
         images_upload_handler: (blobInfo, progress) => {
           return new Promise((resolve, reject) => {
             const formData = new FormData();
@@ -38,8 +38,8 @@ export const RichTextEditor = ({ initialValue, onEditorChange }) => {
                 }
                 return response.json();
               })
-              .then(data => resolve(data.location)) // Retorna a URL da imagem
-              .catch(error => reject(error.message)); // Retorna uma mensagem de erro
+              .then(data => resolve(data.location))
+              .catch(error => reject(error.message));
           });
         },
       }}
