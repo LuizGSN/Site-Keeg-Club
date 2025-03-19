@@ -234,69 +234,85 @@ app.get("/posts/:id", (req, res) => {
 });
 
 // Rota para criar post
-app.post("/posts", verificaToken, async (req, res) => {
-    const { titulo, conteudo, categoria, resumo, imagem, tags } = req.body;
+app.post("/posts", verificaToken, upload.single("imagem"), async (req, res) => {
+  console.log("Corpo da requisição:", req.body); // Depuração: Exibe o corpo da requisição
+  console.log("Arquivo recebido:", req.file); // Depuração: Exibe o arquivo recebido
 
-    if (!titulo || !conteudo || !categoria || !resumo || !imagem) {
-        return res.status(400).json({ erro: "Todos os campos (titulo, conteudo, categoria, resumo e imagem) são obrigatórios" });
-    }
+  const { titulo, conteudo, categoria, resumo, tags } = req.body;
+  const imagem = req.file ? `/uploads/${req.file.filename}` : null; // Caminho da imagem
 
-    try {
-        // Insere o post
-        const { lastID: postId } = await new Promise((resolve, reject) => {
-            db.run(
-                "INSERT INTO posts (titulo, conteudo, categoria, resumo, imagem) VALUES (?, ?, ?, ?, ?)",
-                [titulo, conteudo, categoria, resumo, imagem],
-                function (err) {
-                    if (err) reject(err);
-                    else resolve(this);
-                }
-            );
+  if (!titulo || !conteudo || !categoria || !resumo || !imagem) {
+    return res.status(400).json({ erro: "Todos os campos (titulo, conteudo, categoria, resumo e imagem) são obrigatórios" });
+  }
+
+  try {
+    // Insere o post
+    const { lastID: postId } = await new Promise((resolve, reject) => {
+      db.run(
+        "INSERT INTO posts (titulo, conteudo, categoria, resumo, imagem) VALUES (?, ?, ?, ?, ?)",
+        [titulo, conteudo, categoria, resumo, imagem],
+        function (err) {
+          if (err) reject(err);
+          else resolve(this);
+        }
+      );
+    });
+
+    // Inicializa tagsArray como um array vazio
+    let tagsArray = [];
+
+    // Insere as tags (se houver)
+    if (tags) {
+      try {
+        // Tenta converter as tags de JSON para array
+        tagsArray = JSON.parse(tags);
+      } catch (err) {
+        // Se falhar, assume que as tags são uma string separada por vírgulas
+        tagsArray = tags.split(",").map(tag => tag.trim());
+      }
+
+      for (const tagNome of tagsArray) {
+        // Verifica se a tag já existe
+        let tagId = await new Promise((resolve, reject) => {
+          db.get("SELECT id FROM tags WHERE nome = ?", [tagNome], (err, row) => {
+            if (err) reject(err);
+            else resolve(row ? row.id : null);
+          });
         });
 
-        // Insere as tags (se houver)
-        if (tags && tags.length > 0) {
-            for (const tagNome of tags) {
-                // Verifica se a tag já existe
-                let tagId = await new Promise((resolve, reject) => {
-                    db.get("SELECT id FROM tags WHERE nome = ?", [tagNome], (err, row) => {
-                        if (err) reject(err);
-                        else resolve(row ? row.id : null);
-                    });
-                });
-
-                // Se a tag não existe, cria
-                if (!tagId) {
-                    tagId = await new Promise((resolve, reject) => {
-                        db.run("INSERT INTO tags (nome) VALUES (?)", [tagNome], function (err) {
-                            if (err) reject(err);
-                            else resolve(this.lastID);
-                        });
-                    });
-                }
-
-                // Associa a tag ao post
-                await new Promise((resolve, reject) => {
-                    db.run("INSERT INTO posts_tags (post_id, tag_id) VALUES (?, ?)", [postId, tagId], (err) => {
-                        if (err) reject(err);
-                        else resolve();
-                    });
-                });
-            }
+        // Se a tag não existe, cria
+        if (!tagId) {
+          tagId = await new Promise((resolve, reject) => {
+            db.run("INSERT INTO tags (nome) VALUES (?)", [tagNome], function (err) {
+              if (err) reject(err);
+              else resolve(this.lastID);
+            });
+          });
         }
 
-        res.json({
-            id: postId,
-            titulo,
-            conteudo,
-            categoria,
-            resumo,
-            imagem,
-            tags
+        // Associa a tag ao post
+        await new Promise((resolve, reject) => {
+          db.run("INSERT INTO posts_tags (post_id, tag_id) VALUES (?, ?)", [postId, tagId], (err) => {
+            if (err) reject(err);
+            else resolve();
+          });
         });
-    } catch (error) {
-        res.status(500).json({ erro: error.message });
+      }
     }
+
+    res.json({
+      id: postId,
+      titulo,
+      conteudo,
+      categoria,
+      resumo,
+      imagem,
+      tags: tagsArray, // Usa tagsArray diretamente
+    });
+  } catch (error) {
+    console.error("Erro ao criar post:", error); // Depuração: Exibe o erro no console
+    res.status(500).json({ erro: error.message });
+  }
 });
 
 // Rota para cadastro
@@ -360,67 +376,117 @@ app.post("/login", (req, res) => {
 });
 
 // Rota para atualização do post
-app.put("/posts/:id", verificaToken, async (req, res) => {
-    const { id } = req.params;
-    const { titulo, conteudo, categoria, resumo, imagem, tags } = req.body;
+app.put("/posts/:id", verificaToken, upload.single("imagem"), async (req, res) => {
+  const { id } = req.params;
+  const { titulo, conteudo, categoria, resumo, tags } = req.body;
+  const imagem = req.file ? `/uploads/${req.file.filename}` : null; // Caminho da nova imagem
 
-    if (!titulo || !conteudo || !categoria || !resumo || !imagem) {
-        return res.status(400).json({ erro: "Todos os campos são obrigatórios: título, conteúdo, categoria, resumo e imagem" });
-    }
+  console.log("Corpo da requisição:", req.body); // Depuração: Exibe o corpo da requisição
+  console.log("Arquivo recebido:", req.file); // Depuração: Exibe o arquivo recebido
 
-    try {
-        // Atualiza o post
-        await new Promise((resolve, reject) => {
-            db.run(
-                "UPDATE posts SET titulo = ?, conteudo = ?, categoria = ?, resumo = ?, imagem = ? WHERE id = ?",
-                [titulo, conteudo, categoria, resumo, imagem, id],
-                function (err) {
-                    if (err) reject(err);
-                    else resolve();
-                }
-            );
-        });
+  if (!titulo || !conteudo || !categoria || !resumo) {
+    return res.status(400).json({ erro: "Todos os campos são obrigatórios: título, conteúdo, categoria e resumo" });
+  }
 
-        // Remove as tags antigas
-        await new Promise((resolve, reject) => {
-            db.run("DELETE FROM posts_tags WHERE post_id = ?", [id], (err) => {
-                if (err) reject(err);
-                else resolve();
-            });
-        });
+  try {
+    // Busca o post atual para obter a imagem antiga (caso nenhuma nova imagem seja enviada)
+    const postAtual = await new Promise((resolve, reject) => {
+      db.get("SELECT imagem FROM posts WHERE id = ?", [id], (err, row) => {
+        if (err) {
+          console.error("Erro ao buscar post atual:", err); // Depuração: Exibe o erro
+          reject(err);
+        } else {
+          console.log("Post atual encontrado:", row); // Depuração: Exibe o post atual
+          resolve(row);
+        }
+      });
+    });
 
-        // Insere as novas tags (se houver)
-        if (tags && tags.length > 0) {
-            for (const tagNome of tags) {
-                let tagId = await new Promise((resolve, reject) => {
-                    db.get("SELECT id FROM tags WHERE nome = ?", [tagNome], (err, row) => {
-                        if (err) reject(err);
-                        else resolve(row ? row.id : null);
-                    });
-                });
+    // Define o caminho da imagem (nova ou antiga)
+    const caminhoImagem = imagem || postAtual.imagem;
 
-                if (!tagId) {
-                    tagId = await new Promise((resolve, reject) => {
-                        db.run("INSERT INTO tags (nome) VALUES (?)", [tagNome], function (err) {
-                            if (err) reject(err);
-                            else resolve(this.lastID);
-                        });
-                    });
-                }
+    // Atualiza o post
+    await new Promise((resolve, reject) => {
+      db.run(
+        "UPDATE posts SET titulo = ?, conteudo = ?, categoria = ?, resumo = ?, imagem = ? WHERE id = ?",
+        [titulo, conteudo, categoria, resumo, caminhoImagem, id],
+        function (err) {
+          if (err) {
+            console.error("Erro ao atualizar post:", err); // Depuração: Exibe o erro
+            reject(err);
+          } else {
+            console.log("Post atualizado com sucesso"); // Depuração: Confirma a atualização
+            resolve();
+          }
+        }
+      );
+    });
 
-                await new Promise((resolve, reject) => {
-                    db.run("INSERT INTO posts_tags (post_id, tag_id) VALUES (?, ?)", [id, tagId], (err) => {
-                        if (err) reject(err);
-                        else resolve();
-                    });
-                });
+    // Remove as tags antigas
+    await new Promise((resolve, reject) => {
+      db.run("DELETE FROM posts_tags WHERE post_id = ?", [id], (err) => {
+        if (err) {
+          console.error("Erro ao remover tags antigas:", err); // Depuração: Exibe o erro
+          reject(err);
+        } else {
+          console.log("Tags antigas removidas com sucesso"); // Depuração: Confirma a remoção
+          resolve();
+        }
+      });
+    });
+
+    // Inicializa tagsArray como um array vazio
+    let tagsArray = [];
+
+    // Insere as novas tags (se houver)
+    if (tags && tags.length > 0) {
+      tagsArray = JSON.parse(tags); // Converte as tags de JSON para array
+      for (const tagNome of tagsArray) {
+        let tagId = await new Promise((resolve, reject) => {
+          db.get("SELECT id FROM tags WHERE nome = ?", [tagNome], (err, row) => {
+            if (err) {
+              console.error("Erro ao buscar tag:", err); // Depuração: Exibe o erro
+              reject(err);
+            } else {
+              console.log("Tag encontrada:", row); // Depuração: Exibe a tag encontrada
+              resolve(row ? row.id : null);
             }
+          });
+        });
+
+        if (!tagId) {
+          tagId = await new Promise((resolve, reject) => {
+            db.run("INSERT INTO tags (nome) VALUES (?)", [tagNome], function (err) {
+              if (err) {
+                console.error("Erro ao criar tag:", err); // Depuração: Exibe o erro
+                reject(err);
+              } else {
+                console.log("Tag criada com sucesso:", this.lastID); // Depuração: Confirma a criação
+                resolve(this.lastID);
+              }
+            });
+          });
         }
 
-        res.json({ id, titulo, conteudo, categoria, resumo, imagem, tags });
-    } catch (error) {
-        res.status(500).json({ erro: error.message });
+        await new Promise((resolve, reject) => {
+          db.run("INSERT INTO posts_tags (post_id, tag_id) VALUES (?, ?)", [id, tagId], (err) => {
+            if (err) {
+              console.error("Erro ao associar tag ao post:", err); // Depuração: Exibe o erro
+              reject(err);
+            } else {
+              console.log("Tag associada ao post com sucesso"); // Depuração: Confirma a associação
+              resolve();
+            }
+          });
+        });
+      }
     }
+
+    res.json({ id, titulo, conteudo, categoria, resumo, imagem: caminhoImagem, tags: tagsArray });
+  } catch (error) {
+    console.error("Erro ao atualizar post:", error); // Depuração: Exibe o erro
+    res.status(500).json({ erro: error.message });
+  }
 });
 
 

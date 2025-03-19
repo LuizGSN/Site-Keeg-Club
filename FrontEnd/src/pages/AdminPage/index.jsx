@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import axios from "axios";
 import { theme } from "../../GlobalStyles";
+import { FaEdit, FaTrash } from "react-icons/fa";
 
 const Container = styled.div`
   display: flex;
   align-items: center;
-  justify-content: center;
   flex-direction: column;
   background-color: ${theme.colors.background};
   min-height: 100vh;
@@ -16,6 +16,8 @@ const Container = styled.div`
 
 const Title = styled.h1`
   color: ${theme.colors.text};
+  font-family: ${theme.fonts.secondary};
+  font-size: ${theme.fontSizes.xxlarge};
   margin-bottom: 2rem;
 `;
 
@@ -47,6 +49,8 @@ const PostItem = styled.div`
   & > button {
     background-color: ${theme.colors.primary};
     color: ${theme.colors.text};
+    font-size: ${theme.fontSizes.base};
+    font-family: ${theme.fonts.primary};
     border: none;
     padding: 0.5rem 1rem;
     border-radius: 4px;
@@ -69,19 +73,22 @@ const Tag = styled.span`
   color: ${theme.colors.text};
   padding: 0.25rem 0.5rem;
   border-radius: 12px;
-  font-size: 0.875rem;
+  font-size: ${theme.fontSizes.small};
+  font-family: ${theme.fonts.primary};
 `;
 
 const Button = styled.button`
   background-color: ${theme.colors.primary};
   color: ${theme.colors.text};
+  font-size: ${theme.fontSizes.base};
+  font-family: ${theme.fonts.primary};
   padding: 1rem 2rem;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 1rem;
   margin-top: 1rem;
   margin-bottom: 2rem;
+  transition: background-color 0.3s ease;
 
   &:hover {
     background-color: ${theme.colors.secondary};
@@ -99,10 +106,13 @@ const PaginationContainer = styled.div`
 const PaginationButton = styled.button`
   background-color: ${theme.colors.primary};
   color: ${theme.colors.text};
+  font-size: ${theme.fontSizes.base};
+  font-family: ${theme.fonts.primary};
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
+  transition: background-color 0.3s ease;
 
   &:hover {
     background-color: ${theme.colors.secondary};
@@ -115,13 +125,16 @@ const PaginationButton = styled.button`
 `;
 
 const PageNumber = styled.span`
-  font-size: 1rem;
+  font-size: ${theme.fontSizes.base};
   color: ${theme.colors.text};
+  font-family: ${theme.fonts.primary};
 `;
 
 const LogoutButton = styled.button`
   background-color: ${theme.colors.primary};
   color: ${theme.colors.text};
+  font-size: ${theme.fontSizes.base};
+  font-family: ${theme.fonts.primary};
   padding: 0.5rem 1rem;
   border: none;
   border-radius: 4px;
@@ -130,9 +143,29 @@ const LogoutButton = styled.button`
   top: 1rem;
   right: 1rem;
   z-index: 1000;
+  transition: background-color 0.3s ease;
 
   &:hover {
     background-color: ${theme.colors.secondary};
+  }
+`;
+
+const IconButton = styled(({ delete: isDelete, ...props }) => <button {...props} />)`
+  background: none;
+  border: none;
+  color: ${(props) => (props.delete ? theme.colors.primary : theme.colors.primary)};
+  cursor: pointer;
+  font-size: ${theme.fontSizes.medium};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    color: ${(props) => (props.delete ? "#C82333" : theme.colors.secondary)};
+  }
+
+  & + & {
+    margin-left: 10px;
   }
 `;
 
@@ -216,7 +249,9 @@ const AdminPage = () => {
   return (
     <Container>
       <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
-      <Title>Keeg Club</Title>
+      <Title>
+        <img width={225} src="/src/images/Keeg-Club-Png.png" alt="Keeg Club logo" />
+      </Title>
       <Button onClick={handleCreatePost}>NOVA POSTAGEM</Button>
 
       {loading ? (
@@ -237,8 +272,12 @@ const AdminPage = () => {
                   )}
                 </div>
                 <div>
-                  <button onClick={() => handleEditPost(post.id)}>Editar</button>
-                  <button onClick={() => handleDeletePost(post.id)} style={{ marginLeft: "10px" }}>Excluir</button>
+                  <IconButton onClick={() => handleEditPost(post.id)}>
+                    <FaEdit />
+                  </IconButton>
+                  <IconButton delete onClick={() => handleDeletePost(post.id)}>
+                    <FaTrash />
+                  </IconButton>
                 </div>
               </PostItem>
             ))}

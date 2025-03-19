@@ -72,10 +72,16 @@ const Tag = styled.span`
 `;
 
 export const PostCard = ({ post }) => {
+  // Verifique o valor de post.imagem
+  console.log("Caminho da imagem:", post.imagem);
+
+  // Construa o URL completo da imagem
+  const imagemUrl = `http://localhost:3001${post.imagem}`;
+
   return (
     <Card>
       <Link to={`/post/${post.id}`}>
-        <Image src={post.imagem} alt={post.titulo} />
+        <Image src={imagemUrl} alt={post.titulo} />
         <Content>
           <Category>{post.categoria}</Category>
           <Title>{post.titulo}</Title>

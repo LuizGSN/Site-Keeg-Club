@@ -10,7 +10,7 @@ const Container = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  min-height: 100vh;
   background-color: ${theme.colors.background};
   padding: 2rem;
 `;
@@ -69,7 +69,7 @@ const EditPost = () => {
     conteudo: "",
     categoria: "",
     resumo: "",
-    imagem: "",
+    imagem: null, // Alterado para suportar arquivo
     tags: [],
   });
 
@@ -92,18 +92,32 @@ const EditPost = () => {
     setPost({ ...post, [e.target.name]: e.target.value });
   };
 
+  const handleFileChange = (e) => {
+    setPost({ ...post, imagem: e.target.files[0] }); // Armazena o arquivo selecionado
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const formData = new FormData();
+      formData.append("titulo", post.titulo);
+      formData.append("conteudo", post.conteudo);
+      formData.append("categoria", post.categoria);
+      formData.append("resumo", post.resumo);
+      formData.append("tags", JSON.stringify(post.tags)); // Converte as tags para JSON
+
+      // Adiciona a imagem apenas se um novo arquivo foi selecionado
+      if (post.imagem instanceof File) {
+        formData.append("imagem", post.imagem);
+      }
+
       await axios.put(
         `http://localhost:3001/posts/${id}`,
-        {
-          ...post,
-          tags: post.tags,
-        },
+        formData,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "multipart/form-data", // Define o tipo de conteúdo como multipart
           },
         }
       );
@@ -146,12 +160,9 @@ const EditPost = () => {
           required
         />
         <Input
-          type="text"
-          name="imagem"
-          placeholder="URL da Imagem"
-          value={post.imagem}
-          onChange={handleChange}
-          required
+          type="file" // Campo de upload de arquivo
+          accept="image/*" // Aceita apenas arquivos de imagem
+          onChange={handleFileChange} // Armazena o arquivo selecionado
         />
         <Input
           type="text"
@@ -163,7 +174,7 @@ const EditPost = () => {
           }
           required
         />
-        <Button type="submit">Salvar alterações</Button>
+        <Button type="submit">Salvar</Button>
       </Form>
     </Container>
   );

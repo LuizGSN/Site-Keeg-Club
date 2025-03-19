@@ -122,11 +122,14 @@ export const PostDetail = () => {
     return <Container>Post não encontrado</Container>;
   }
 
+  // Construa o URL completo da imagem
+  const imagemUrl = `http://localhost:3001${post.imagem}`;
+
   return (
     <Container>
       <PostHeader>
         <PostTitle>{post.titulo}</PostTitle>
-        <PostImage src={post.imagem} alt={post.titulo} />
+        <PostImage src={imagemUrl} alt={post.titulo} />
       </PostHeader>
       <MetaData>
         <span>Categoria: {post.categoria}</span>
