@@ -7,17 +7,25 @@ const Card = styled.article`
   border-radius: 8px;
   overflow: hidden;
   transition: transform 0.3s, box-shadow 0.3s;
+  width: 100%; // Largura padrão
+  max-width: 350px; // Largura máxima fixa para o card
 
   &:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 15px #ff660065;
   }
+`;
+
+const ImageContainer = styled.div`
+  width: 100%;
+  height: 200px; // Altura fixa para o contêiner da imagem
+  overflow: hidden;
 `;
 
 const Image = styled.img`
   width: 100%;
-  height: auto;
-  object-fit: cover;
+  height: 100%;
+  object-fit: cover; // Garante que a imagem cubra o espaço sem distorcer
 `;
 
 const Content = styled.div`
@@ -39,17 +47,6 @@ const Title = styled.h2`
   font-size: ${theme.fontSizes.xlarge};
   color: ${theme.colors.text};
   margin-bottom: 1rem;
-`;
-
-const Excerpt = styled.p`
-  font-family: ${theme.fonts.primary};
-  font-size: ${theme.fontSizes.base};
-  color: ${theme.colors.text};
-  line-height: 1.6;
-  margin-bottom: 1.5rem;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
 `;
 
 const PostDate = styled.small`
@@ -81,11 +78,12 @@ export const PostCard = ({ post }) => {
   return (
     <Card>
       <Link to={`/post/${post.id}`}>
-        <Image src={imagemUrl} alt={post.titulo} />
+        <ImageContainer>
+          <Image src={imagemUrl} alt={post.titulo} />
+        </ImageContainer>
         <Content>
           <Category>{post.categoria}</Category>
           <Title>{post.titulo}</Title>
-          <Excerpt>{post.resumo || 'Leia o post completo...'}</Excerpt>
           {post.tags && post.tags.length > 0 && (
             <TagsContainer>
               {post.tags.map((tag, index) => (

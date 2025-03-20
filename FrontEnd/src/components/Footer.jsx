@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { theme } from '../GlobalStyles';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // Adicione useNavigate
 import { FaFacebook, FaInstagram, FaTwitter, FaYoutube } from 'react-icons/fa';
 
 const FooterContainer = styled.footer`
@@ -141,6 +141,7 @@ const Copyright = styled.div`
 export const Footer = () => {
   const [categories, setCategories] = useState([]);
   const [email, setEmail] = useState('');
+  const navigate = useNavigate(); // Hook para navegação programática
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -183,6 +184,12 @@ export const Footer = () => {
     }
   };
 
+  // Função para rolar a página para o topo ao clicar em um link
+  const handleLinkClick = (to) => {
+    navigate(to); // Navega para a rota
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Rola a página para o topo
+  };
+
   return (
     <FooterContainer>
       <FooterContent>
@@ -202,7 +209,9 @@ export const Footer = () => {
           <ul>
             {categories.map((category) => (
               <li key={category}>
-                <Link to={`/category/${category}`}>{category}</Link>
+                <Link to={`/category/${category}`} onClick={() => handleLinkClick(`/category/${category}`)}>
+                  {category}
+                </Link>
               </li>
             ))}
           </ul>
@@ -211,10 +220,26 @@ export const Footer = () => {
         <Section>
           <h3>Links Úteis</h3>
           <ul>
-            <li><Link to="/politica-de-privacidade">Política de Privacidade</Link></li>
-            <li><Link to="/termos-de-uso">Termos de Uso</Link></li>
-            <li><Link to="/sobre">Sobre Nós</Link></li>
-            <li><Link to="/contato">Contato</Link></li>
+            <li>
+              <Link to="/politica-de-privacidade" onClick={() => handleLinkClick('/politica-de-privacidade')}>
+                Política de Privacidade
+              </Link>
+            </li>
+            <li>
+              <Link to="/termos-de-uso" onClick={() => handleLinkClick('/termos-de-uso')}>
+                Termos de Uso
+              </Link>
+            </li>
+            <li>
+              <Link to="/sobre" onClick={() => handleLinkClick('/sobre')}>
+                Sobre Nós
+              </Link>
+            </li>
+            <li>
+              <Link to="/contato" onClick={() => handleLinkClick('/contato')}>
+                Contato
+              </Link>
+            </li>
           </ul>
         </Section>
 

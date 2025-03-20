@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 import { theme } from '../../GlobalStyles';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // Adicione useNavigate
 import { SearchBar } from '../Search';
 
 const Nav = styled.nav`
@@ -65,16 +65,27 @@ const MenuLink = styled(Link)`
 
 export const Navbar = () => {
   const categories = ['Animes', 'Filmes', 'Séries', 'Jogos'];
+  const navigate = useNavigate(); // Hook para navegação programática
+
+  // Função para rolar a página para o topo ao clicar em um link
+  const handleLinkClick = (to) => {
+    navigate(to); // Navega para a rota
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Rola a página para o topo
+  };
 
   return (
     <Nav>
       <NavContent>
-        <Logo to="/">
+        <Logo to="/" onClick={() => handleLinkClick('/')}>
           <img src="/src/images/Keeg-Club-Logo-Png.png" alt="Keeg Club Logo" />
         </Logo>
         <Menu>
           {categories.map((category) => (
-            <MenuLink key={category} to={`/category/${category}`}>
+            <MenuLink
+              key={category}
+              to={`/category/${category}`}
+              onClick={() => handleLinkClick(`/category/${category}`)}
+            >
               {category}
             </MenuLink>
           ))}

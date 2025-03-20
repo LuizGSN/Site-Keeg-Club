@@ -46,6 +46,11 @@ export const HomePage = () => {
     fetchPosts(currentPage);
   }, [currentPage]);
 
+  // Efeito para subir a página ao topo quando a página mudar
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // Comportamento suave
+  }, [currentPage]);
+
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
   };

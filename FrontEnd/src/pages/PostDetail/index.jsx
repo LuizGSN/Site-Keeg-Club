@@ -4,10 +4,11 @@ import { useParams } from 'react-router-dom';
 import { CommentForm } from '../../components/Comments';
 import { theme } from '../../GlobalStyles';
 
+// Estilos dos componentes
 const TagList = styled.div`
   display: flex;
   gap: 1rem;
-  margin: 2rem 0;
+  margin: 1rem 0;
 `;
 
 const Tag = styled.span`
@@ -15,7 +16,7 @@ const Tag = styled.span`
   color: ${theme.colors.text};
   padding: 0.5rem 1rem;
   border-radius: 20px;
-  font-size: 1.4rem;
+  font-size: 1rem;
 `;
 
 const Container = styled.div`
@@ -27,6 +28,7 @@ const Container = styled.div`
 const PostHeader = styled.div`
   max-width: 700px;
   margin: 0 auto;
+  text-align: center;
 `;
 
 const PostTitle = styled.h1`
@@ -34,7 +36,6 @@ const PostTitle = styled.h1`
   font-size: ${theme.fontSizes.xxlarge};
   color: ${theme.colors.primary};
   margin-bottom: 2rem;
-  text-align: center;
 `;
 
 const PostImage = styled.img`
@@ -67,6 +68,15 @@ const MetaData = styled.div`
   margin-bottom: 2rem;
   color: ${theme.colors.primary};
   justify-content: center;
+  font-size: 0.9rem;
+`;
+
+const SectionTitle = styled.h2`
+  font-family: ${theme.fonts.secondary};
+  font-size: ${theme.fontSizes.large};
+  color: ${theme.colors.primary};
+  margin-bottom: 1.5rem;
+  text-align: center;
 `;
 
 export const PostDetail = () => {
@@ -140,7 +150,7 @@ export const PostDetail = () => {
       <PostContent dangerouslySetInnerHTML={{ __html: post.conteudo }} />
       
       <section>
-        <h2>Tags</h2>
+        <SectionTitle>Tags</SectionTitle>
         {post.tags && post.tags.length > 0 ? (
           <TagList>
             {post.tags.map((tag) => (

@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken");
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const nodemailer = require('nodemailer');
 require("dotenv").config();
 
 const app = express();
@@ -548,6 +549,43 @@ app.get("/newsletter", (req, res) => {
       res.json(rows);
     });
   });
+
+// Rota para envio de e-mails do formulário
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'keegclub60@gmail.com', // Seu e-mail
+    pass: 'hjue ephl ujcv puyv', // Sua senha ou senha de app
+  },
+});
+
+// Rota para receber os dados do formulário
+app.post('/contact', async (req, res) => {
+  const { name, email, subject, message } = req.body;
+
+  try {
+    // Envia um e-mail de confirmação
+    await transporter.sendMail({
+      from: 'keegclub60@gmail.com',
+      to: email, // E-mail do usuário
+      subject: 'Confirmação de contato - Keeg Club',
+      text: `Olá ${name},\n\nObrigado por entrar em contato! Recebemos sua mensagem sobre "${subject}" e responderemos em breve.\n\nAtenciosamente,\nEquipe Keeg Club`,
+    });
+
+    // Envia um e-mail para você com a mensagem do usuário
+    await transporter.sendMail({
+      from: 'keegclub60@gmail.com',
+      to: 'keegclub60@gmail.com', // Seu e-mail
+      subject: `Nova mensagem de ${name}: ${subject}`,
+      text: `De: ${name} (${email})\n\nMensagem:\n${message}`,
+    });
+
+    res.status(200).json({ message: 'Mensagem enviada com sucesso!' });
+  } catch (error) {
+    console.error('Erro ao enviar e-mail:', error);
+    res.status(500).json({ message: 'Erro ao enviar a mensagem.' });
+  }
+});
 
   // Iniciar o servidor
 app.listen(PORT, () => {
