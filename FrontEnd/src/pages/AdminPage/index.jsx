@@ -169,17 +169,40 @@ const IconButton = styled(({ delete: isDelete, ...props }) => <button {...props}
   }
 `;
 
+const SearchContainer = styled.div`
+  width: 100%;
+  max-width: 800px;
+  margin-bottom: 1rem;
+`;
+
+const SearchInput = styled.input`
+  width: 100%;
+  padding: 0.5rem;
+  font-size: ${theme.fontSizes.base};
+  font-family: ${theme.fonts.primary};
+  border: 1px solid ${theme.colors.primary};
+  border-radius: 4px;
+  background-color: ${theme.colors.background};
+  color: ${theme.colors.text};
+
+  &:focus {
+    outline: none;
+    border-color: ${theme.colors.secondary};
+  }
+`;
+
 const AdminPage = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
-  const loadPosts = async (page = 1) => {
+  const loadPosts = async (page = 1, searchTerm = "") => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:3001/posts?page=${page}&limit=6`, {
+      const response = await axios.get(`http://localhost:3001/posts?page=${page}&limit=6&q=${searchTerm}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -196,6 +219,21 @@ const AdminPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = (event) => {
+    setSearchTerm(event.target.value);
+    setCurrentPage(1); // Resetar para a primeira página ao buscar
+  };
+
+  const handleFirstPage = () => {
+    setCurrentPage(1);
+    loadPosts(1);
+  };
+  
+  const handleLastPage = () => {
+    setCurrentPage(totalPages);
+    loadPosts(totalPages);
   };
 
   const handleCreatePost = () => {
@@ -243,8 +281,8 @@ const AdminPage = () => {
   };
 
   useEffect(() => {
-    loadPosts(currentPage);
-  }, [currentPage]);
+    loadPosts(currentPage, searchTerm);
+  }, [currentPage, searchTerm]);;
 
   return (
     <Container>
@@ -253,6 +291,15 @@ const AdminPage = () => {
         <img width={225} src="/src/images/Keeg-Club-Logo-Png.png" alt="Keeg Club logo" />
       </Title>
       <Button onClick={handleCreatePost}>NOVA POSTAGEM</Button>
+
+      <SearchContainer>
+        <SearchInput
+          type="text"
+          placeholder="Buscar por título..."
+          value={searchTerm}
+          onChange={handleSearch}
+        />
+      </SearchContainer>
 
       {loading ? (
         <p>Carregando...</p>
@@ -284,15 +331,21 @@ const AdminPage = () => {
           </PostList>
 
           <PaginationContainer>
-            <PaginationButton onClick={handlePreviousPage} disabled={currentPage === 1}>
-              Anterior
-            </PaginationButton>
-            <PageNumber>
-              Página {currentPage} de {totalPages}
-            </PageNumber>
-            <PaginationButton onClick={handleNextPage} disabled={currentPage === totalPages}>
-              Próximo
-            </PaginationButton>
+          <PaginationButton onClick={handleFirstPage} disabled={currentPage === 1}>
+            Primeira
+          </PaginationButton>
+          <PaginationButton onClick={handlePreviousPage} disabled={currentPage === 1}>
+            Anterior
+          </PaginationButton>
+          <PageNumber>
+            Página {currentPage} de {totalPages}
+          </PageNumber>
+          <PaginationButton onClick={handleNextPage} disabled={currentPage === totalPages}>
+            Próximo
+          </PaginationButton>
+          <PaginationButton onClick={handleLastPage} disabled={currentPage === totalPages}>
+            Última
+          </PaginationButton>
           </PaginationContainer>
         </>
       )}
