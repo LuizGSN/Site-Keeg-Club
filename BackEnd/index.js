@@ -48,20 +48,26 @@ app.post('/upload', upload.single('file'), (req, res) => {
 
 // Rota de autenticação Middleware
 const verificaToken = (req, res, next) => {
-    const authHeader = req.headers["authorization"];
-    if (!authHeader) {
-        return res.status(401).json({ erro: "Token não fornecido" });
-    }
+  const authHeader = req.headers["authorization"];
+  if (!authHeader) {
+      return res.status(401).json({ erro: "Token não fornecido" });
+  }
 
-    const token = authHeader.split(" ")[1]; // Pega apenas o token sem "Bearer"
+  const token = authHeader.split(" ")[1];
 
-    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-        if (err) {
-            return res.status(401).json({ erro: "Token inválido" });
-        }
-        req.userId = decoded.id;
-        next();
-    });
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+      if (err) {
+          if (err.name === 'TokenExpiredError') {
+              return res.status(401).json({ 
+                  erro: "Token expirado",
+                  code: "TOKEN_EXPIRED" // Código para o frontend identificar
+              });
+          }
+          return res.status(401).json({ erro: "Token inválido" });
+      }
+      req.userId = decoded.id;
+      next();
+  });
 };
 
 // Rota para verificar se o token ainda é válido
@@ -353,27 +359,118 @@ app.post("/register", async (req, res) => {
 
 // Rota de login
 app.post("/login", (req, res) => {
-    const { email, senha } = req.body;
+  const { email, senha } = req.body;
 
-    if (!email || !senha) {
-        return res.status(400).json({ erro: "Email e senha são obrigatórios" });
-    }
+  if (!email || !senha) {
+      return res.status(400).json({ erro: "Email e senha são obrigatórios" });
+  }
 
-    db.get("SELECT * FROM usuarios WHERE email = ?", [email], async (err, user) => {
-        if (!user) {
-            return res.status(400).json({ erro: "Usuário não encontrado" });
-        }
+  db.get("SELECT * FROM usuarios WHERE email = ?", [email], async (err, user) => {
+      if (!user) {
+          return res.status(400).json({ erro: "Usuário não encontrado" });
+      }
 
-        // Comparar a senha informada com a senha criptografada do banco
-        const senhaValida = await bcrypt.compare(senha, user.senha);
-        if (!senhaValida) {
-            return res.status(400).json({ erro: "Senha incorreta" });
-        }
+      const senhaValida = await bcrypt.compare(senha, user.senha);
+      if (!senhaValida) {
+          return res.status(400).json({ erro: "Senha incorreta" });
+      }
 
-        // Gerar token JWT
-        const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET,);
-        res.json({ token, nome: user.nome, email: user.email });
-    });
+      // Gerar access token (15 minutos)
+      const accessToken = jwt.sign(
+          { id: user.id, email: user.email }, 
+          process.env.JWT_SECRET, 
+          { expiresIn: '15m' } // Formato correto
+      );
+
+      // Gerar refresh token (7 dias)
+      const refreshToken = jwt.sign(
+          { id: user.id }, 
+          process.env.JWT_REFRESH_SECRET, 
+          { expiresIn: '7d' } // Formato correto
+      );
+
+      // Armazenar o refresh token no banco de dados
+      db.run(
+          "INSERT INTO refresh_tokens (token, user_id, expires_at) VALUES (?, ?, datetime('now', '+7 days'))",
+          [refreshToken, user.id],
+          function(err) {
+              if (err) {
+                  return res.status(500).json({ erro: "Erro ao armazenar refresh token" });
+              }
+
+              res.json({ 
+                  accessToken, 
+                  refreshToken,
+                  nome: user.nome, 
+                  email: user.email,
+                  expiresIn: 900 // 15 minutos em segundos (para o frontend)
+              });
+          }
+      );
+  });
+});
+
+// Rota para obter novo access token usando refresh token
+app.post("/refresh-token", (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+      return res.status(400).json({ erro: "Refresh token é obrigatório" });
+  }
+
+  // Verificar se o refresh token existe e é válido
+  db.get(
+      "SELECT * FROM refresh_tokens WHERE token = ? AND expires_at > datetime('now')",
+      [refreshToken],
+      (err, tokenRecord) => {
+          if (err || !tokenRecord) {
+              return res.status(401).json({ erro: "Refresh token inválido ou expirado" });
+          }
+
+          jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, decoded) => {
+              if (err) {
+                  return res.status(401).json({ erro: "Refresh token inválido" });
+              }
+
+              // Gerar novo access token
+              const newAccessToken = jwt.sign(
+                  { id: decoded.id }, 
+                  process.env.JWT_SECRET, 
+                  { expiresIn: '15m' }
+              );
+
+              res.json({ 
+                  accessToken: newAccessToken,
+                  expiresIn: 900
+              });
+          });
+      }
+  );
+});
+
+// Rota para logout (invalidar refresh token)
+app.post("/logout", (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+      return res.status(400).json({ erro: "Refresh token é obrigatório" });
+  }
+
+  db.run(
+      "DELETE FROM refresh_tokens WHERE token = ?",
+      [refreshToken],
+      function(err) {
+          if (err) {
+              return res.status(500).json({ erro: "Erro ao invalidar refresh token" });
+          }
+          
+          if (this.changes === 0) {
+              return res.status(404).json({ erro: "Refresh token não encontrado" });
+          }
+
+          res.json({ mensagem: "Logout realizado com sucesso" });
+      }
+  );
 });
 
 // Rota para atualização do post
