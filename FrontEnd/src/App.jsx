@@ -17,6 +17,7 @@ import { PrivacyPolicy } from './pages/FooterPage/PrivacyPolicy';
 import { TermsOfUse } from './pages/FooterPage/TermsOfUse';
 import { About } from './pages/FooterPage/About';
 import { Contact } from './pages/FooterPage/Contact';
+import AdminCommentsPage from './pages/AdminPage/AdminCommentsPage'
 
 function App() {
   const location = useLocation();
@@ -53,6 +54,7 @@ function App() {
           <Route path="/termos-de-uso" element={<TermsOfUse />} />
           <Route path="/sobre" element={<About />} />
           <Route path="/contato" element={<Contact />} />
+          <Route path="/admin/comments" element={<AdminCommentsPage />} />
         </Routes>
       </main>
       {!hideNavbarAndFooter && <Footer />}

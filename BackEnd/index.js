@@ -587,6 +587,63 @@ app.post('/contact', async (req, res) => {
   }
 });
 
+// Rota para listar todos os comentários (admin)
+app.get("/comments", verificaToken, (req, res) => {
+  const { page = 1, limit = 10, q: searchTerm } = req.query;
+  const offset = (page - 1) * limit;
+
+  let query = "SELECT * FROM comments";
+  let countQuery = "SELECT COUNT(*) AS total FROM comments";
+  let params = [];
+  let conditions = [];
+
+  if (searchTerm) {
+    conditions.push("(author_name LIKE ? OR text LIKE ?)");
+    params.push(`%${searchTerm}%`, `%${searchTerm}%`);
+  }
+
+  if (conditions.length > 0) {
+    query += " WHERE " + conditions.join(" AND ");
+    countQuery += " WHERE " + conditions.join(" AND ");
+  }
+
+  query += " ORDER BY date DESC LIMIT ? OFFSET ?";
+  params.push(limit, offset);
+
+  db.get(countQuery, params.slice(0, conditions.length), (err, countRow) => {
+    if (err) {
+      return res.status(500).json({ erro: err.message });
+    }
+
+    db.all(query, params, (err, rows) => {
+      if (err) {
+        return res.status(500).json({ erro: err.message });
+      }
+
+      res.json({
+        comments: rows,
+        totalPages: Math.ceil(countRow.total / limit),
+        currentPage: parseInt(page),
+      });
+    });
+  });
+});
+
+// Rota para excluir comentário (apenas admin)
+app.delete("/comments/:id", verificaToken, (req, res) => {
+  const { id } = req.params;
+
+  db.run("DELETE FROM comments WHERE id = ?", [id], function (err) {
+      if (err) {
+          return res.status(500).json({ erro: err.message });
+      }
+      if (this.changes === 0) {
+          return res.status(404).json({ erro: "Comentário não encontrado" });
+      }
+      res.json({ mensagem: "Comentário excluído com sucesso" });
+  });
+});
+
   // Iniciar o servidor
 app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT}`);

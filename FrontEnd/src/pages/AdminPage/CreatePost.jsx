@@ -53,11 +53,32 @@ const Textarea = styled.textarea`
 const Button = styled.button`
   background-color: ${theme.colors.primary};
   color: ${theme.colors.text};
-  padding: 1rem 2rem;
+  font-size: ${theme.fontSizes.base};
+  font-family: ${theme.fonts.primary};
+  padding: 0.5rem 1rem;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 1rem;
+
+  &:hover {
+    background-color: ${theme.colors.secondary};
+  }
+`;
+
+const BackButton = styled.button`
+  background-color: ${theme.colors.primary};
+  color: ${theme.colors.text};
+  font-size: ${theme.fontSizes.base};
+  font-family: ${theme.fonts.primary};
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1000;
+  transition: background-color 0.3s ease;
 
   &:hover {
     background-color: ${theme.colors.secondary};
@@ -126,8 +147,13 @@ const CreatePost = () => {
     }
   };
 
+  const handleBackToAdmin = () => {
+    navigate("/admin");
+  };
+
 return (
 <Container>
+<BackButton onClick={handleBackToAdmin}> Voltar </BackButton>
 <Title>Criar Novo Post</Title>
 <Form onSubmit={handleSubmit}>
   <Input

@@ -221,6 +221,10 @@ const AdminPage = () => {
     }
   };
 
+  const handleManageComments = () => {
+    navigate("/admin/comments");
+  };
+
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
     setCurrentPage(1); // Resetar para a primeira página ao buscar
@@ -291,6 +295,7 @@ const AdminPage = () => {
         <img width={225} src="/src/images/Keeg-Club-Logo-Png.png" alt="Keeg Club logo" />
       </Title>
       <Button onClick={handleCreatePost}>NOVA POSTAGEM</Button>
+      <Button onClick={handleManageComments} style={{ marginLeft: '1rem' }}>GERENCIAR COMENTÁRIOS</Button>
 
       <SearchContainer>
         <SearchInput
