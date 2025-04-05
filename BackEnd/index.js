@@ -1,34 +1,40 @@
+require('dotenv').config();
 const express = require("express");
 const cors = require("cors");
-const db = require("./database");
+const { Pool } = require('pg');
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
-require("dotenv").config();
+
+// Configuração do PostgreSQL (Neon)
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Configuração do Multer para upload de imagens
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      const uploadPath = path.join(__dirname, 'public', 'uploads');
-      if (!fs.existsSync(uploadPath)) {
-        fs.mkdirSync(uploadPath, { recursive: true });
-      }
-      cb(null, uploadPath);
-    },
-    filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-      const ext = path.extname(file.originalname);
-      cb(null, file.fieldname + '-' + uniqueSuffix + ext);
-    },
-  });
-  
-  const upload = multer({ storage });
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(__dirname, 'public', 'uploads');
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+  },
+});
+
+const upload = multer({ storage });
 
 // Middleware
 app.use(cors());
@@ -37,96 +43,98 @@ app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
 // Rota para upload de imagens
 app.post('/upload', upload.single('file'), (req, res) => {
-    if (!req.file) {
-      return res.status(400).json({ erro: "Nenhum arquivo enviado" });
-    }
-  
-    const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-    res.json({ location: imageUrl });
-  });
-  
+  if (!req.file) {
+    return res.status(400).json({ erro: "Nenhum arquivo enviado" });
+  }
 
-// Rota de autenticação Middleware
+  const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+  res.json({ location: imageUrl });
+});
+
+// Middleware de autenticação
 const verificaToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   if (!authHeader) {
-      return res.status(401).json({ erro: "Token não fornecido" });
+    return res.status(401).json({ erro: "Token não fornecido" });
   }
 
   const token = authHeader.split(" ")[1];
 
   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-      if (err) {
-          if (err.name === 'TokenExpiredError') {
-              return res.status(401).json({ 
-                  erro: "Token expirado",
-                  code: "TOKEN_EXPIRED" // Código para o frontend identificar
-              });
-          }
-          return res.status(401).json({ erro: "Token inválido" });
+    if (err) {
+      if (err.name === 'TokenExpiredError') {
+        return res.status(401).json({ 
+          erro: "Token expirado",
+          code: "TOKEN_EXPIRED"
+        });
       }
-      req.userId = decoded.id;
-      next();
+      return res.status(401).json({ erro: "Token inválido" });
+    }
+    req.userId = decoded.id;
+    next();
   });
 };
 
-// Rota para verificar se o token ainda é válido
-app.get("/auth/verify", verificaToken, (req, res) => {
-    res.json({ autenticado: true });
+// Rota para verificar token
+app.get("/auth/verify", verificaToken, async (req, res) => {
+  try {
+    const result = await pool.query("SELECT id, nome, email FROM usuarios WHERE id = $1", [req.userId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ erro: "Usuário não encontrado" });
+    }
+    res.json({ autenticado: true, user: result.rows[0] });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
 });
 
 // Rota protegida do painel admin
 app.get("/admin", verificaToken, (req, res) => {
-    res.json({ mensagem: "Painel administrativo acessado com sucesso!" });
+  res.json({ mensagem: "Painel administrativo acessado com sucesso!" });
 });
 
 // Rota para criar comentário
-app.post("/posts/:id/comments", (req, res) => {
-    const { id } = req.params;
-    const { text, author_name } = req.body;
-  
-    if (!text) {
-      return res.status(400).json({ erro: "Texto do comentário é obrigatório" });
+app.post("/posts/:id/comments", async (req, res) => {
+  const { id } = req.params;
+  const { text, author_name } = req.body;
+
+  if (!text) {
+    return res.status(400).json({ erro: "Texto do comentário é obrigatório" });
+  }
+
+  try {
+    const postResult = await pool.query("SELECT * FROM posts WHERE id = $1", [id]);
+    if (postResult.rows.length === 0) {
+      return res.status(404).json({ erro: "Post não encontrado" });
     }
-  
-    db.get("SELECT * FROM posts WHERE id = ?", [id], (err, post) => {
-      if (!post) {
-        return res.status(404).json({ erro: "Post não encontrado" });
-      }
-  
-      const author = author_name ? author_name : "Anônimo";
-      const date = new Date().toISOString();
-  
-      db.run(
-        "INSERT INTO comments (post_id, author_name, text, date) VALUES (?, ?, ?, ?)",
-        [id, author, text, date],
-        function (err) {
-          if (err) {
-            return res.status(500).json({ erro: err.message });
-          }
-          res.status(201).json({
-            id: this.lastID,
-            post_id: id,
-            author_name: author,
-            text,
-            date,
-          });
-        }
-      );
-    });
+
+    const author = author_name ? author_name : "Anônimo";
+    const date = new Date().toISOString();
+
+    const insertResult = await pool.query(
+      "INSERT INTO comments (post_id, author_name, text, date) VALUES ($1, $2, $3, $4) RETURNING *",
+      [id, author, text, date]
+    );
+
+    res.status(201).json(insertResult.rows[0]);
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
 });
 
-  // Rota para listar comentários de um post
-  app.get("/posts/:id/comments", (req, res) => {
-    const { id } = req.params;  // ID do post
-    
-    // Buscar todos os comentários do post
-    db.all("SELECT * FROM comments WHERE post_id = ? ORDER BY date DESC", [id], (err, rows) => {
-      if (err) {
-        return res.status(500).json({ erro: err.message });
-      }
-      res.json(rows);
-    });
+// Rota para listar comentários de um post
+app.get("/posts/:id/comments", async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    const result = await pool.query(
+      "SELECT * FROM comments WHERE post_id = $1 ORDER BY date DESC", 
+      [id]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
 });
 
 // Rota de teste
@@ -135,178 +143,156 @@ app.get("/", (req, res) => {
 });
 
 // Rota para listar posts com busca
-app.get("/posts", (req, res) => {
-  const { page = 1, limit = 6, categoria, q } = req.query; // Adiciona o parâmetro de busca (q)
+app.get("/posts", async (req, res) => {
+  const { page = 1, limit = 6, categoria, q } = req.query;
   const offset = (page - 1) * limit;
 
-  // Monta a query SQL com base nos filtros
   let query = "SELECT * FROM posts";
+  let countQuery = "SELECT COUNT(*) AS total FROM posts";
   let params = [];
   let conditions = [];
 
   if (categoria) {
-    conditions.push("categoria = ?");
+    conditions.push("categoria = $1");
     params.push(categoria);
   }
 
   if (q) {
-    conditions.push("(titulo LIKE ? OR resumo LIKE ? OR categoria LIKE ?)");
-    params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+    conditions.push("(titulo LIKE $1 OR resumo LIKE $1 OR categoria LIKE $1)");
+    params.push(`%${q}%`);
   }
 
   if (conditions.length > 0) {
     query += " WHERE " + conditions.join(" AND ");
+    countQuery += " WHERE " + conditions.join(" AND ");
   }
 
-  query += " ORDER BY data DESC LIMIT ? OFFSET ?";
+  query += " ORDER BY data DESC LIMIT $" + (params.length + 1) + " OFFSET $" + (params.length + 2);
   params.push(limit, offset);
 
-  // Conta o total de posts (com ou sem filtro)
-  db.get("SELECT COUNT(*) AS total FROM posts" + (conditions.length > 0 ? " WHERE " + conditions.join(" AND ") : ""), params.slice(0, conditions.length), (err, row) => {
-    if (err) {
-      return res.status(500).json({ erro: err.message });
-    }
-
-    const totalPosts = row.total;
+  try {
+    const countResult = await pool.query(countQuery, params.slice(0, conditions.length));
+    const totalPosts = parseInt(countResult.rows[0].total);
     const totalPages = Math.ceil(totalPosts / limit);
 
-    // Busca os posts com base na query
-    db.all(query, params, (err, rows) => {
-      if (err) {
-        return res.status(500).json({ erro: err.message });
-      }
+    const postsResult = await pool.query(query, params);
+    
+    // Buscar tags para cada post
+    const postsWithTags = await Promise.all(postsResult.rows.map(async (post) => {
+      const tagsResult = await pool.query(
+        `SELECT t.nome 
+         FROM tags t
+         INNER JOIN posts_tags pt ON t.id = pt.tag_id
+         WHERE pt.post_id = $1`, 
+        [post.id]
+      );
+      return {
+        ...post,
+        tags: tagsResult.rows.map(tag => tag.nome)
+      };
+    }));
 
-      res.json({
-        totalPosts,
-        totalPages,
-        currentPage: parseInt(page),
-        posts: rows.map(post => ({
-          id: post.id,
-          titulo: post.titulo,
-          conteudo: post.conteudo,
-          categoria: post.categoria,
-          resumo: post.resumo,
-          imagem: post.imagem,
-          data: post.data,
-          tags: post.tags ? JSON.parse(post.tags) : [], // Converte a string de tags para array
-        })),
-      });
+    res.json({
+      totalPosts,
+      totalPages,
+      currentPage: parseInt(page),
+      posts: postsWithTags,
     });
-  });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
 });
 
 // Rota para obter um post específico
-app.get("/posts/:id", (req, res) => {
-    const { id } = req.params;
+app.get("/posts/:id", async (req, res) => {
+  const { id } = req.params;
 
-    db.get(
-        `SELECT 
-            id, 
-            titulo, 
-            conteudo, 
-            categoria, 
-            resumo, 
-            imagem, 
-            data 
-        FROM posts 
-        WHERE id = ?`, 
-        [id], 
-        async (err, post) => {
-            if (err) {
-                return res.status(500).json({ erro: "Erro ao buscar o post" });
-            }
-
-            if (!post) {
-                return res.status(404).json({ erro: "Post não encontrado" });
-            }
-
-            // Busca as tags do post
-            const tags = await new Promise((resolve, reject) => {
-                db.all(
-                    `SELECT t.nome 
-                     FROM tags t
-                     INNER JOIN posts_tags pt ON t.id = pt.tag_id
-                     WHERE pt.post_id = ?`, 
-                    [id], 
-                    (err, tags) => {
-                        if (err) reject(err);
-                        else resolve(tags.map(tag => tag.nome));
-                    }
-                );
-            });
-
-            res.json({ ...post, tags });
-        }
+  try {
+    const postResult = await pool.query(
+      `SELECT 
+          id, 
+          titulo, 
+          conteudo, 
+          categoria, 
+          resumo, 
+          imagem, 
+          data 
+      FROM posts 
+      WHERE id = $1`, 
+      [id]
     );
+
+    if (postResult.rows.length === 0) {
+      return res.status(404).json({ erro: "Post não encontrado" });
+    }
+
+    const post = postResult.rows[0];
+    
+    // Busca as tags do post
+    const tagsResult = await pool.query(
+      `SELECT t.nome 
+       FROM tags t
+       INNER JOIN posts_tags pt ON t.id = pt.tag_id
+       WHERE pt.post_id = $1`, 
+      [id]
+    );
+
+    res.json({ 
+      ...post, 
+      tags: tagsResult.rows.map(tag => tag.nome) 
+    });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
 });
 
 // Rota para criar post
 app.post("/posts", verificaToken, upload.single("imagem"), async (req, res) => {
-  console.log("Corpo da requisição:", req.body); // Depuração: Exibe o corpo da requisição
-  console.log("Arquivo recebido:", req.file); // Depuração: Exibe o arquivo recebido
-
   const { titulo, conteudo, categoria, resumo, tags } = req.body;
-  const imagem = req.file ? `/uploads/${req.file.filename}` : null; // Caminho da imagem
+  const imagem = req.file ? `/uploads/${req.file.filename}` : null;
 
   if (!titulo || !conteudo || !categoria || !resumo || !imagem) {
     return res.status(400).json({ erro: "Todos os campos (titulo, conteudo, categoria, resumo e imagem) são obrigatórios" });
   }
 
+  const client = await pool.connect();
   try {
+    await client.query('BEGIN');
+
     // Insere o post
-    const { lastID: postId } = await new Promise((resolve, reject) => {
-      db.run(
-        "INSERT INTO posts (titulo, conteudo, categoria, resumo, imagem) VALUES (?, ?, ?, ?, ?)",
-        [titulo, conteudo, categoria, resumo, imagem],
-        function (err) {
-          if (err) reject(err);
-          else resolve(this);
-        }
-      );
-    });
+    const postResult = await client.query(
+      "INSERT INTO posts (titulo, conteudo, categoria, resumo, imagem) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      [titulo, conteudo, categoria, resumo, imagem]
+    );
+    const postId = postResult.rows[0].id;
 
-    // Inicializa tagsArray como um array vazio
+    // Processa as tags se existirem
     let tagsArray = [];
-
-    // Insere as tags (se houver)
     if (tags) {
       try {
-        // Tenta converter as tags de JSON para array
         tagsArray = JSON.parse(tags);
-      } catch (err) {
-        // Se falhar, assume que as tags são uma string separada por vírgulas
+      } catch {
         tagsArray = tags.split(",").map(tag => tag.trim());
       }
 
       for (const tagNome of tagsArray) {
         // Verifica se a tag já existe
-        let tagId = await new Promise((resolve, reject) => {
-          db.get("SELECT id FROM tags WHERE nome = ?", [tagNome], (err, row) => {
-            if (err) reject(err);
-            else resolve(row ? row.id : null);
-          });
-        });
+        let tagResult = await client.query("SELECT id FROM tags WHERE nome = $1", [tagNome]);
+        let tagId = tagResult.rows[0]?.id;
 
         // Se a tag não existe, cria
         if (!tagId) {
-          tagId = await new Promise((resolve, reject) => {
-            db.run("INSERT INTO tags (nome) VALUES (?)", [tagNome], function (err) {
-              if (err) reject(err);
-              else resolve(this.lastID);
-            });
-          });
+          tagResult = await client.query("INSERT INTO tags (nome) VALUES ($1) RETURNING id", [tagNome]);
+          tagId = tagResult.rows[0].id;
         }
 
         // Associa a tag ao post
-        await new Promise((resolve, reject) => {
-          db.run("INSERT INTO posts_tags (post_id, tag_id) VALUES (?, ?)", [postId, tagId], (err) => {
-            if (err) reject(err);
-            else resolve();
-          });
-        });
+        await client.query("INSERT INTO posts_tags (post_id, tag_id) VALUES ($1, $2)", [postId, tagId]);
       }
     }
 
+    await client.query('COMMIT');
+    
     res.json({
       id: postId,
       titulo,
@@ -314,365 +300,315 @@ app.post("/posts", verificaToken, upload.single("imagem"), async (req, res) => {
       categoria,
       resumo,
       imagem,
-      tags: tagsArray, // Usa tagsArray diretamente
+      tags: tagsArray,
     });
   } catch (error) {
-    console.error("Erro ao criar post:", error); // Depuração: Exibe o erro no console
+    await client.query('ROLLBACK');
     res.status(500).json({ erro: error.message });
+  } finally {
+    client.release();
   }
 });
 
 // Rota para cadastro
 app.post("/register", async (req, res) => { 
-    const { nome, email, senha } = req.body;
+  const { nome, email, senha } = req.body;
 
-    if (!nome || !email || !senha) {
-        return res.status(400).json({ erro: "Todos os campos são obrigatórios" });
+  if (!nome || !email || !senha) {
+    return res.status(400).json({ erro: "Todos os campos são obrigatórios" });
+  }
+
+  try {
+    // Verifica se o email já existe
+    const userResult = await pool.query("SELECT * FROM usuarios WHERE email = $1", [email]);
+    if (userResult.rows.length > 0) {
+      return res.status(400).json({ erro: "Email já cadastrado" });
     }
 
-    db.get("SELECT * FROM usuarios WHERE email = ?", [email], async (err, user) => {
-        if (err) {
-            return res.status(500).json({ erro: "Erro ao verificar o email" });
-        }
+    const senhaHash = await bcrypt.hash(senha, 10);
+    const insertResult = await pool.query(
+      "INSERT INTO usuarios (nome, email, senha) VALUES ($1, $2, $3) RETURNING id, nome, email",
+      [nome, email, senhaHash]
+    );
 
-        if (user) {
-            return res.status(400).json({ erro: "Email já cadastrado" });
-        }
-
-        try {
-            const senhaHash = await bcrypt.hash(senha, 10);
-            db.run(
-                "INSERT INTO usuarios (nome, email, senha) VALUES (?, ?, ?)",
-                [nome, email, senhaHash],
-                function (err) {
-                    if (err) {
-                        return res.status(500).json({ erro: err.message });
-                    }
-                    res.json({ id: this.lastID, nome, email });
-                }
-            );
-        } catch (error) {
-            return res.status(500).json({ erro: "Erro ao processar a senha" });
-        }
-    });
+    res.json(insertResult.rows[0]);
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
 });
 
 // Rota de login
-app.post("/login", (req, res) => {
+app.post("/login", async (req, res) => {
   const { email, senha } = req.body;
 
   if (!email || !senha) {
-      return res.status(400).json({ erro: "Email e senha são obrigatórios" });
+    return res.status(400).json({ erro: "Email e senha são obrigatórios" });
   }
 
-  db.get("SELECT * FROM usuarios WHERE email = ?", [email], async (err, user) => {
-      if (!user) {
-          return res.status(400).json({ erro: "Usuário não encontrado" });
-      }
+  try {
+    const userResult = await pool.query("SELECT * FROM usuarios WHERE email = $1", [email]);
+    if (userResult.rows.length === 0) {
+      return res.status(400).json({ erro: "Usuário não encontrado" });
+    }
 
-      const senhaValida = await bcrypt.compare(senha, user.senha);
-      if (!senhaValida) {
-          return res.status(400).json({ erro: "Senha incorreta" });
-      }
+    const user = userResult.rows[0];
+    const senhaValida = await bcrypt.compare(senha, user.senha);
+    if (!senhaValida) {
+      return res.status(400).json({ erro: "Senha incorreta" });
+    }
 
-      // Gerar access token (15 minutos)
-      const accessToken = jwt.sign(
-          { id: user.id, email: user.email }, 
-          process.env.JWT_SECRET, 
-          { expiresIn: '15m' } // Formato correto
-      );
+    // Gerar access token (15 minutos)
+    const accessToken = jwt.sign(
+      { id: user.id, email: user.email }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '15m' }
+    );
 
-      // Gerar refresh token (7 dias)
-      const refreshToken = jwt.sign(
-          { id: user.id }, 
-          process.env.JWT_REFRESH_SECRET, 
-          { expiresIn: '7d' } // Formato correto
-      );
+    // Gerar refresh token (7 dias)
+    const refreshToken = jwt.sign(
+      { id: user.id }, 
+      process.env.JWT_REFRESH_SECRET, 
+      { expiresIn: '7d' }
+    );
 
-      // Armazenar o refresh token no banco de dados
-      db.run(
-          "INSERT INTO refresh_tokens (token, user_id, expires_at) VALUES (?, ?, datetime('now', '+7 days'))",
-          [refreshToken, user.id],
-          function(err) {
-              if (err) {
-                  return res.status(500).json({ erro: "Erro ao armazenar refresh token" });
-              }
+    // Armazenar o refresh token no banco de dados
+    await pool.query(
+      "INSERT INTO refresh_tokens (token, user_id, expires_at) VALUES ($1, $2, NOW() + INTERVAL '7 days')",
+      [refreshToken, user.id]
+    );
 
-              res.json({ 
-                  accessToken, 
-                  refreshToken,
-                  nome: user.nome, 
-                  email: user.email,
-                  expiresIn: 900 // 15 minutos em segundos (para o frontend)
-              });
-          }
-      );
-  });
+    res.json({ 
+      accessToken, 
+      refreshToken,
+      nome: user.nome, 
+      email: user.email,
+      expiresIn: 900 // 15 minutos em segundos
+    });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
 });
 
 // Rota para obter novo access token usando refresh token
-app.post("/refresh-token", (req, res) => {
+app.post("/refresh-token", async (req, res) => {
   const { refreshToken } = req.body;
 
   if (!refreshToken) {
-      return res.status(400).json({ erro: "Refresh token é obrigatório" });
+    return res.status(400).json({ erro: "Refresh token é obrigatório" });
   }
 
-  // Verificar se o refresh token existe e é válido
-  db.get(
-      "SELECT * FROM refresh_tokens WHERE token = ? AND expires_at > datetime('now')",
-      [refreshToken],
-      (err, tokenRecord) => {
-          if (err || !tokenRecord) {
-              return res.status(401).json({ erro: "Refresh token inválido ou expirado" });
-          }
+  try {
+    // Verificar se o refresh token existe e é válido
+    const tokenResult = await pool.query(
+      "SELECT * FROM refresh_tokens WHERE token = $1 AND expires_at > NOW()",
+      [refreshToken]
+    );
 
-          jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, (err, decoded) => {
-              if (err) {
-                  return res.status(401).json({ erro: "Refresh token inválido" });
-              }
+    if (tokenResult.rows.length === 0) {
+      return res.status(401).json({ erro: "Refresh token inválido ou expirado" });
+    }
 
-              // Gerar novo access token
-              const newAccessToken = jwt.sign(
-                  { id: decoded.id }, 
-                  process.env.JWT_SECRET, 
-                  { expiresIn: '15m' }
-              );
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
 
-              res.json({ 
-                  accessToken: newAccessToken,
-                  expiresIn: 900
-              });
-          });
-      }
-  );
+    // Gerar novo access token
+    const newAccessToken = jwt.sign(
+      { id: decoded.id }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '15m' }
+    );
+
+    res.json({ 
+      accessToken: newAccessToken,
+      expiresIn: 900
+    });
+  } catch (error) {
+    res.status(401).json({ erro: "Refresh token inválido" });
+  }
 });
 
 // Rota para logout (invalidar refresh token)
-app.post("/logout", (req, res) => {
+app.post("/logout", async (req, res) => {
   const { refreshToken } = req.body;
 
   if (!refreshToken) {
-      return res.status(400).json({ erro: "Refresh token é obrigatório" });
+    return res.status(400).json({ erro: "Refresh token é obrigatório" });
   }
 
-  db.run(
-      "DELETE FROM refresh_tokens WHERE token = ?",
-      [refreshToken],
-      function(err) {
-          if (err) {
-              return res.status(500).json({ erro: "Erro ao invalidar refresh token" });
-          }
-          
-          if (this.changes === 0) {
-              return res.status(404).json({ erro: "Refresh token não encontrado" });
-          }
+  try {
+    const result = await pool.query(
+      "DELETE FROM refresh_tokens WHERE token = $1",
+      [refreshToken]
+    );
+    
+    if (result.rowCount === 0) {
+      return res.status(404).json({ erro: "Refresh token não encontrado" });
+    }
 
-          res.json({ mensagem: "Logout realizado com sucesso" });
-      }
-  );
+    res.json({ mensagem: "Logout realizado com sucesso" });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
 });
 
 // Rota para atualização do post
 app.put("/posts/:id", verificaToken, upload.single("imagem"), async (req, res) => {
   const { id } = req.params;
   const { titulo, conteudo, categoria, resumo, tags } = req.body;
-  const imagem = req.file ? `/uploads/${req.file.filename}` : null; // Caminho da nova imagem
-
-  console.log("Corpo da requisição:", req.body); // Depuração: Exibe o corpo da requisição
-  console.log("Arquivo recebido:", req.file); // Depuração: Exibe o arquivo recebido
+  const imagem = req.file ? `/uploads/${req.file.filename}` : null;
 
   if (!titulo || !conteudo || !categoria || !resumo) {
     return res.status(400).json({ erro: "Todos os campos são obrigatórios: título, conteúdo, categoria e resumo" });
   }
 
+  const client = await pool.connect();
   try {
-    // Busca o post atual para obter a imagem antiga (caso nenhuma nova imagem seja enviada)
-    const postAtual = await new Promise((resolve, reject) => {
-      db.get("SELECT imagem FROM posts WHERE id = ?", [id], (err, row) => {
-        if (err) {
-          console.error("Erro ao buscar post atual:", err); // Depuração: Exibe o erro
-          reject(err);
-        } else {
-          console.log("Post atual encontrado:", row); // Depuração: Exibe o post atual
-          resolve(row);
-        }
-      });
-    });
+    await client.query('BEGIN');
 
-    // Define o caminho da imagem (nova ou antiga)
-    const caminhoImagem = imagem || postAtual.imagem;
+    // Busca o post atual para obter a imagem antiga
+    const postResult = await client.query("SELECT imagem FROM posts WHERE id = $1", [id]);
+    if (postResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ erro: "Post não encontrado" });
+    }
+
+    const caminhoImagem = imagem || postResult.rows[0].imagem;
 
     // Atualiza o post
-    await new Promise((resolve, reject) => {
-      db.run(
-        "UPDATE posts SET titulo = ?, conteudo = ?, categoria = ?, resumo = ?, imagem = ? WHERE id = ?",
-        [titulo, conteudo, categoria, resumo, caminhoImagem, id],
-        function (err) {
-          if (err) {
-            console.error("Erro ao atualizar post:", err); // Depuração: Exibe o erro
-            reject(err);
-          } else {
-            console.log("Post atualizado com sucesso"); // Depuração: Confirma a atualização
-            resolve();
-          }
-        }
-      );
-    });
+    await client.query(
+      "UPDATE posts SET titulo = $1, conteudo = $2, categoria = $3, resumo = $4, imagem = $5 WHERE id = $6",
+      [titulo, conteudo, categoria, resumo, caminhoImagem, id]
+    );
 
     // Remove as tags antigas
-    await new Promise((resolve, reject) => {
-      db.run("DELETE FROM posts_tags WHERE post_id = ?", [id], (err) => {
-        if (err) {
-          console.error("Erro ao remover tags antigas:", err); // Depuração: Exibe o erro
-          reject(err);
-        } else {
-          console.log("Tags antigas removidas com sucesso"); // Depuração: Confirma a remoção
-          resolve();
-        }
-      });
-    });
+    await client.query("DELETE FROM posts_tags WHERE post_id = $1", [id]);
 
-    // Inicializa tagsArray como um array vazio
+    // Processa as novas tags se existirem
     let tagsArray = [];
+    if (tags) {
+      try {
+        tagsArray = JSON.parse(tags);
+      } catch {
+        tagsArray = tags.split(",").map(tag => tag.trim());
+      }
 
-    // Insere as novas tags (se houver)
-    if (tags && tags.length > 0) {
-      tagsArray = JSON.parse(tags); // Converte as tags de JSON para array
       for (const tagNome of tagsArray) {
-        let tagId = await new Promise((resolve, reject) => {
-          db.get("SELECT id FROM tags WHERE nome = ?", [tagNome], (err, row) => {
-            if (err) {
-              console.error("Erro ao buscar tag:", err); // Depuração: Exibe o erro
-              reject(err);
-            } else {
-              console.log("Tag encontrada:", row); // Depuração: Exibe a tag encontrada
-              resolve(row ? row.id : null);
-            }
-          });
-        });
+        // Verifica se a tag já existe
+        let tagResult = await client.query("SELECT id FROM tags WHERE nome = $1", [tagNome]);
+        let tagId = tagResult.rows[0]?.id;
 
+        // Se a tag não existe, cria
         if (!tagId) {
-          tagId = await new Promise((resolve, reject) => {
-            db.run("INSERT INTO tags (nome) VALUES (?)", [tagNome], function (err) {
-              if (err) {
-                console.error("Erro ao criar tag:", err); // Depuração: Exibe o erro
-                reject(err);
-              } else {
-                console.log("Tag criada com sucesso:", this.lastID); // Depuração: Confirma a criação
-                resolve(this.lastID);
-              }
-            });
-          });
+          tagResult = await client.query("INSERT INTO tags (nome) VALUES ($1) RETURNING id", [tagNome]);
+          tagId = tagResult.rows[0].id;
         }
 
-        await new Promise((resolve, reject) => {
-          db.run("INSERT INTO posts_tags (post_id, tag_id) VALUES (?, ?)", [id, tagId], (err) => {
-            if (err) {
-              console.error("Erro ao associar tag ao post:", err); // Depuração: Exibe o erro
-              reject(err);
-            } else {
-              console.log("Tag associada ao post com sucesso"); // Depuração: Confirma a associação
-              resolve();
-            }
-          });
-        });
+        // Associa a tag ao post
+        await client.query("INSERT INTO posts_tags (post_id, tag_id) VALUES ($1, $2)", [id, tagId]);
       }
     }
 
-    res.json({ id, titulo, conteudo, categoria, resumo, imagem: caminhoImagem, tags: tagsArray });
+    await client.query('COMMIT');
+    
+    res.json({ 
+      id, 
+      titulo, 
+      conteudo, 
+      categoria, 
+      resumo, 
+      imagem: caminhoImagem, 
+      tags: tagsArray 
+    });
   } catch (error) {
-    console.error("Erro ao atualizar post:", error); // Depuração: Exibe o erro
+    await client.query('ROLLBACK');
+    res.status(500).json({ erro: error.message });
+  } finally {
+    client.release();
+  }
+});
+
+// Rota para excluir post
+app.delete("/posts/:id", verificaToken, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const postResult = await pool.query("SELECT * FROM posts WHERE id = $1", [id]);
+    if (postResult.rows.length === 0) {
+      return res.status(404).json({ erro: "Post não encontrado" });
+    }
+
+    await pool.query("DELETE FROM posts WHERE id = $1", [id]);
+    res.json({ mensagem: "Post excluído com sucesso" });
+  } catch (error) {
     res.status(500).json({ erro: error.message });
   }
 });
 
-
-// Rota para excluir post
-app.delete("/posts/:id", verificaToken, (req, res) => {
-    const { id } = req.params;
-
-    db.get("SELECT * FROM posts WHERE id = ?", [id], (err, post) => {
-        if (!post) {
-            return res.status(404).json({ erro: "Post não encontrado" });
-        }
-
-        db.run("DELETE FROM posts WHERE id = ?", [id], function (err) {
-            if (err) {
-                return res.status(500).json({ erro: err.message });
-            }
-            res.json({ mensagem: "Post excluído com sucesso" });
-        });
-    });
+// Rota para buscar categorias únicas
+app.get("/categories", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT DISTINCT categoria FROM posts");
+    const categories = result.rows.map(row => row.categoria);
+    res.json(categories);
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
 });
 
-// Rota para buscar categorias únicas
-app.get("/categories", (req, res) => {
-    db.all("SELECT DISTINCT categoria FROM posts", (err, rows) => {
-      if (err) {
-        return res.status(500).json({ erro: "Erro ao buscar categorias" });
-      }
-      const categories = rows.map((row) => row.categoria);
-      res.json(categories);
-    });
-  });
-
 // Rota para o Newsletter
-app.post("/newsletter", (req, res) => {
-    const { email } = req.body;
-  
-    if (!email) {
-      return res.status(400).json({ erro: "Email é obrigatório" });
-    }
-  
-    db.run(
-      "INSERT INTO newsletter (email) VALUES (?)",
-      [email],
-      function (err) {
-        if (err) {
-          return res.status(500).json({ erro: "Erro ao salvar email" });
-        }
-        res.json({ mensagem: "Inscrição realizada com sucesso!" });
-      }
+app.post("/newsletter", async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ erro: "Email é obrigatório" });
+  }
+
+  try {
+    await pool.query(
+      "INSERT INTO newsletter (email) VALUES ($1)",
+      [email]
     );
-  });
+    res.json({ mensagem: "Inscrição realizada com sucesso!" });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+});
 
 // Rota para listar e-mails da newsletter
-app.get("/newsletter", (req, res) => {
-    db.all("SELECT * FROM newsletter", (err, rows) => {
-      if (err) {
-        return res.status(500).json({ erro: "Erro ao buscar e-mails" });
-      }
-      res.json(rows);
-    });
-  });
+app.get("/newsletter", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM newsletter");
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
+});
 
-// Rota para envio de e-mails do formulário
+// Configuração do Nodemailer
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'keegclub60@gmail.com', // Seu e-mail
-    pass: 'hjue ephl ujcv puyv', // Sua senha ou senha de app
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
 
-// Rota para receber os dados do formulário
+// Rota para contato
 app.post('/contact', async (req, res) => {
   const { name, email, subject, message } = req.body;
 
   try {
     // Envia um e-mail de confirmação
     await transporter.sendMail({
-      from: 'keegclub60@gmail.com',
-      to: email, // E-mail do usuário
+      from: process.env.EMAIL_USER,
+      to: email,
       subject: 'Confirmação de contato - Keeg Club',
       text: `Olá ${name},\n\nObrigado por entrar em contato! Recebemos sua mensagem sobre "${subject}" e responderemos em breve.\n\nAtenciosamente,\nEquipe Keeg Club`,
     });
 
     // Envia um e-mail para você com a mensagem do usuário
     await transporter.sendMail({
-      from: 'keegclub60@gmail.com',
-      to: 'keegclub60@gmail.com', // Seu e-mail
+      from: process.env.EMAIL_USER,
+      to: process.env.EMAIL_USER,
       subject: `Nova mensagem de ${name}: ${subject}`,
       text: `De: ${name} (${email})\n\nMensagem:\n${message}`,
     });
@@ -685,7 +621,7 @@ app.post('/contact', async (req, res) => {
 });
 
 // Rota para listar todos os comentários (admin)
-app.get("/comments", verificaToken, (req, res) => {
+app.get("/comments", verificaToken, async (req, res) => {
   const { page = 1, limit = 10, q: searchTerm } = req.query;
   const offset = (page - 1) * limit;
 
@@ -695,8 +631,8 @@ app.get("/comments", verificaToken, (req, res) => {
   let conditions = [];
 
   if (searchTerm) {
-    conditions.push("(author_name LIKE ? OR text LIKE ?)");
-    params.push(`%${searchTerm}%`, `%${searchTerm}%`);
+    conditions.push("(author_name LIKE $1 OR text LIKE $1)");
+    params.push(`%${searchTerm}%`);
   }
 
   if (conditions.length > 0) {
@@ -704,44 +640,41 @@ app.get("/comments", verificaToken, (req, res) => {
     countQuery += " WHERE " + conditions.join(" AND ");
   }
 
-  query += " ORDER BY date DESC LIMIT ? OFFSET ?";
+  query += " ORDER BY date DESC LIMIT $" + (params.length + 1) + " OFFSET $" + (params.length + 2);
   params.push(limit, offset);
 
-  db.get(countQuery, params.slice(0, conditions.length), (err, countRow) => {
-    if (err) {
-      return res.status(500).json({ erro: err.message });
-    }
+  try {
+    const countResult = await pool.query(countQuery, params.slice(0, conditions.length));
+    const commentsResult = await pool.query(query, params);
 
-    db.all(query, params, (err, rows) => {
-      if (err) {
-        return res.status(500).json({ erro: err.message });
-      }
-
-      res.json({
-        comments: rows,
-        totalPages: Math.ceil(countRow.total / limit),
-        currentPage: parseInt(page),
-      });
+    res.json({
+      comments: commentsResult.rows,
+      totalPages: Math.ceil(parseInt(countResult.rows[0].total) / limit),
+      currentPage: parseInt(page),
     });
-  });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
 });
 
 // Rota para excluir comentário (apenas admin)
-app.delete("/comments/:id", verificaToken, (req, res) => {
+app.delete("/comments/:id", verificaToken, async (req, res) => {
   const { id } = req.params;
 
-  db.run("DELETE FROM comments WHERE id = ?", [id], function (err) {
-      if (err) {
-          return res.status(500).json({ erro: err.message });
-      }
-      if (this.changes === 0) {
-          return res.status(404).json({ erro: "Comentário não encontrado" });
-      }
-      res.json({ mensagem: "Comentário excluído com sucesso" });
-  });
+  try {
+    const result = await pool.query("DELETE FROM comments WHERE id = $1", [id]);
+    
+    if (result.rowCount === 0) {
+      return res.status(404).json({ erro: "Comentário não encontrado" });
+    }
+
+    res.json({ mensagem: "Comentário excluído com sucesso" });
+  } catch (error) {
+    res.status(500).json({ erro: error.message });
+  }
 });
 
-  // Iniciar o servidor
+// Iniciar o servidor
 app.listen(PORT, () => {
-    console.log(`Servidor rodando na porta ${PORT}`);
-  });
+  console.log(`Servidor rodando na porta ${PORT}`);
+});
