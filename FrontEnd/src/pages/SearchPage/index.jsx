@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { useLocation } from 'react-router-dom';
 import { PostCard } from '../HomePage/PostCard';
 import { theme } from '../../GlobalStyles';
+import { API_BASE_URL } from '../../config';
 
 const Container = styled.div`
   max-width: ${theme.sizes.maxWidth};
@@ -33,7 +34,7 @@ export const SearchPage = () => {
 
     const fetchPosts = async () => {
       try {
-        const response = await fetch(`http://localhost:3001/posts?q=${query}`);
+        const response = await fetch(`${API_BASE_URL}/posts?q=${query}`);
         if (!response.ok) {
           throw new Error('Erro ao buscar posts');
         }

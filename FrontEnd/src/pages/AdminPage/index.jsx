@@ -4,6 +4,7 @@ import styled from "styled-components";
 import axios from "axios";
 import { theme } from "../../GlobalStyles";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import { API_BASE_URL } from "../../config";
 
 const Container = styled.div`
   display: flex;
@@ -202,7 +203,7 @@ const AdminPage = () => {
   const loadPosts = async (page = 1, searchTerm = "") => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:3001/posts?page=${page}&limit=6&q=${searchTerm}`, {
+      const response = await axios.get(`${API_BASE_URL}/posts?page=${page}&limit=6&q=${searchTerm}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -227,7 +228,7 @@ const AdminPage = () => {
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
-    setCurrentPage(1); // Resetar para a primeira página ao buscar
+    setCurrentPage(1);
   };
 
   const handleFirstPage = () => {
@@ -252,7 +253,7 @@ const AdminPage = () => {
     if (!window.confirm("Tem certeza que deseja excluir este post?")) return;
 
     try {
-      await axios.delete(`http://localhost:3001/posts/${postId}`, {
+      await axios.delete(`${API_BASE_URL}/posts/${postId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },

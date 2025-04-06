@@ -4,6 +4,7 @@ import { theme } from '../../GlobalStyles';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Pagination } from '../../components/Pagination';
+import { API_BASE_URL } from '../../config';
 
 const Container = styled.div`
   max-width: ${theme.sizes.maxWidth};
@@ -24,7 +25,7 @@ export const HomePage = () => {
 
   const fetchPosts = async (page) => {
     try {
-      const res = await axios.get(`http://localhost:3001/posts?page=${page}&limit=6`);
+      const res = await axios.get(`${API_BASE_URL}/posts?page=${page}&limit=6`);
       console.log("Resposta da API:", res.data);
 
       if (res.data && Array.isArray(res.data.posts)) {
@@ -46,9 +47,8 @@ export const HomePage = () => {
     fetchPosts(currentPage);
   }, [currentPage]);
 
-  // Efeito para subir a página ao topo quando a página mudar
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // Comportamento suave
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentPage]);
 
   const handlePageChange = (newPage) => {

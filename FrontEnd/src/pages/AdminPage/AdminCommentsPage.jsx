@@ -4,6 +4,7 @@ import styled from "styled-components";
 import axios from "axios";
 import { theme } from "../../GlobalStyles";
 import { FaTrash, FaSearch } from "react-icons/fa";
+import { API_BASE_URL } from "../../config";
 
 const Container = styled.div`
   display: flex;
@@ -229,7 +230,7 @@ const AdminCommentsPage = () => {
   const loadComments = async (page = 1, searchTerm = "") => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:3001/comments?page=${page}&limit=10&q=${searchTerm}`, {
+      const response = await axios.get(`${API_BASE_URL}/comments?page=${page}&limit=10&q=${searchTerm}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -239,9 +240,8 @@ const AdminCommentsPage = () => {
         setComments(response.data.comments);
         setTotalPages(response.data.totalPages);
         
-        // Carrega os títulos dos posts
         const postIds = [...new Set(response.data.comments.map(c => c.post_id))];
-        const postsResponse = await axios.get(`http://localhost:3001/posts?ids=${postIds.join(',')}`, {
+        const postsResponse = await axios.get(`${API_BASE_URL}/posts?ids=${postIds.join(',')}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -275,7 +275,7 @@ const AdminCommentsPage = () => {
     if (!window.confirm("Tem certeza que deseja excluir este comentário?")) return;
 
     try {
-      await axios.delete(`http://localhost:3001/comments/${commentId}`, {
+      await axios.delete(`${API_BASE_URL}/comments/${commentId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },

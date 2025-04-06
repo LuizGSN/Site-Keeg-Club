@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { CommentForm } from '../../components/Comments';
 import { theme } from '../../GlobalStyles';
+import { API_BASE_URL } from '../../config';
 
-// Estilos dos componentes
 const TagList = styled.div`
   display: flex;
   gap: 1rem;
@@ -88,7 +88,7 @@ export const PostDetail = () => {
   useEffect(() => {
     const fetchPostData = async () => {
       try {
-        const response = await fetch(`http://localhost:3001/posts/${id}`);
+        const response = await fetch(`${API_BASE_URL}/posts/${id}`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -132,8 +132,7 @@ export const PostDetail = () => {
     return <Container>Post não encontrado</Container>;
   }
 
-  // Construa o URL completo da imagem
-  const imagemUrl = `http://localhost:3001${post.imagem}`;
+  const imagemUrl = `${API_BASE_URL}${post.imagem}`;
 
   return (
     <Container>

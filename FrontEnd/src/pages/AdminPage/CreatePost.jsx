@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { theme } from "../../GlobalStyles";
 import { RichTextEditor } from '../../components/RichTextEditor';
+import { API_BASE_URL } from "../../config";
 
 const Container = styled.div`
   display: flex;
@@ -106,30 +107,27 @@ const CreatePost = () => {
     try {
       setLoading(true);
   
-      // Cria um FormData para enviar o arquivo
       const formData = new FormData();
       formData.append("titulo", titulo);
       formData.append("conteudo", conteudo);
       formData.append("categoria", categoria);
       formData.append("resumo", resumo);
-      formData.append("imagem", imagem); // Adiciona o arquivo de imagem
+      formData.append("imagem", imagem);
   
-      // Converte as tags em uma string JSON
       const tagsArray = tags.split(",").map(tag => tag.trim());
       formData.append("tags", JSON.stringify(tagsArray));
   
-      // Depuração: Exibe os dados do FormData
       for (let [key, value] of formData.entries()) {
         console.log(key, value);
       }
   
       const response = await axios.post(
-        "http://localhost:3001/posts",
+        `${API_BASE_URL}/posts`,
         formData,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
-            "Content-Type": "multipart/form-data", // Define o tipo de conteúdo como multipart
+            "Content-Type": "multipart/form-data",
           },
         }
       );
@@ -165,7 +163,7 @@ return (
   <RichTextEditor
     initialValue={conteudo}
     onEditorChange={(newContent) => {
-      setConteudo(newContent); // Atualiza o estado no componente pai
+      setConteudo(newContent);
     }}
   />
   <Input

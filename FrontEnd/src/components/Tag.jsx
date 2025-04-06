@@ -3,7 +3,8 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { CommentForm } from '../../components/Comments';
 import { theme } from '../../GlobalStyles';
-import { TagList, Tag } from './Tags'; // Importe o componente de tags
+import { TagList, Tag } from './Tags';
+import { API_BASE_URL } from '../config';
 
 const Container = styled.div`
   max-width: ${theme.sizes.maxWidth};
@@ -58,7 +59,7 @@ export const PostDetail = () => {
   useEffect(() => {
     const fetchPostData = async () => {
       try {
-        const response = await fetch(`http://localhost:3001/posts/${id}`);
+        const response = await fetch(`${API_BASE_URL}/posts/${id}`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);

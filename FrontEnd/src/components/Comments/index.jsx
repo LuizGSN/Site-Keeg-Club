@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 import { useState, useEffect } from 'react';
 import { theme } from '../../GlobalStyles';
+import { API_BASE_URL } from '../../config';
 
 const CommentSection = styled.section`
   margin-top: 4rem;
@@ -103,7 +104,7 @@ export const CommentForm = ({ postId }) => {
   useEffect(() => {
     const fetchComments = async () => {
       try {
-        const response = await fetch(`http://localhost:3001/posts/${postId}/comments`);
+        const response = await fetch(`${API_BASE_URL}/posts/${postId}/comments`);
         if (response.ok) {
           const data = await response.json();
           setComments(data);
@@ -138,7 +139,7 @@ export const CommentForm = ({ postId }) => {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`http://localhost:3001/posts/${postId}/comments`, {
+      const response = await fetch(`${API_BASE_URL}/posts/${postId}/comments`, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify({

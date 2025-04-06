@@ -4,6 +4,7 @@ import styled from "styled-components";
 import axios from "axios";
 import { theme } from "../../GlobalStyles";
 import { RichTextEditor } from '../../components/RichTextEditor';
+import { API_BASE_URL } from "../../config";
 
 const Container = styled.div`
   display: flex;
@@ -90,14 +91,14 @@ const EditPost = () => {
     conteudo: "",
     categoria: "",
     resumo: "",
-    imagem: null, // Alterado para suportar arquivo
+    imagem: null,
     tags: [],
   });
 
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const response = await axios.get(`http://localhost:3001/posts/${id}`);
+        const response = await axios.get(`${API_BASE_URL}/posts/${id}`);
         setPost({
           ...response.data,
           tags: response.data.tags || [],
@@ -118,7 +119,7 @@ const EditPost = () => {
   };
 
   const handleFileChange = (e) => {
-    setPost({ ...post, imagem: e.target.files[0] }); // Armazena o arquivo selecionado
+    setPost({ ...post, imagem: e.target.files[0] });
   };
 
   const handleSubmit = async (e) => {
@@ -129,20 +130,19 @@ const EditPost = () => {
       formData.append("conteudo", post.conteudo);
       formData.append("categoria", post.categoria);
       formData.append("resumo", post.resumo);
-      formData.append("tags", JSON.stringify(post.tags)); // Converte as tags para JSON
+      formData.append("tags", JSON.stringify(post.tags));
 
-      // Adiciona a imagem apenas se um novo arquivo foi selecionado
       if (post.imagem instanceof File) {
         formData.append("imagem", post.imagem);
       }
 
       await axios.put(
-        `http://localhost:3001/posts/${id}`,
+        `${API_BASE_URL}/posts/${id}`,
         formData,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
-            "Content-Type": "multipart/form-data", // Define o tipo de conteúdo como multipart
+            "Content-Type": "multipart/form-data",
           },
         }
       );
@@ -186,9 +186,9 @@ const EditPost = () => {
           required
         />
         <Input
-          type="file" // Campo de upload de arquivo
-          accept="image/*" // Aceita apenas arquivos de imagem
-          onChange={handleFileChange} // Armazena o arquivo selecionado
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
         />
         <Input
           type="text"

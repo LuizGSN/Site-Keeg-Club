@@ -1,14 +1,15 @@
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 import { theme } from '../../GlobalStyles';
+import { API_BASE_URL } from '../../config';
 
 const Card = styled.article`
   background: ${theme.colors.tertiary};
   border-radius: 8px;
   overflow: hidden;
   transition: transform 0.3s, box-shadow 0.3s;
-  width: 100%; // Largura padrão
-  max-width: 350px; // Largura máxima fixa para o card
+  width: 100%;
+  max-width: 350px;
 
   &:hover {
     transform: translateY(-5px);
@@ -18,14 +19,14 @@ const Card = styled.article`
 
 const ImageContainer = styled.div`
   width: 100%;
-  height: 200px; // Altura fixa para o contêiner da imagem
+  height: 200px;
   overflow: hidden;
 `;
 
 const Image = styled.img`
   width: 100%;
   height: 100%;
-  object-fit: cover; // Garante que a imagem cubra o espaço sem distorcer
+  object-fit: cover;
 `;
 
 const Content = styled.div`
@@ -69,11 +70,9 @@ const Tag = styled.span`
 `;
 
 export const PostCard = ({ post }) => {
-  // Verifique o valor de post.imagem
   console.log("Caminho da imagem:", post.imagem);
 
-  // Construa o URL completo da imagem
-  const imagemUrl = `http://localhost:3001${post.imagem}`;
+  const imagemUrl = `${API_BASE_URL}${post.imagem}`;
 
   return (
     <Card>

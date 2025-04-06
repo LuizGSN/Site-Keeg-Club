@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { theme } from '../GlobalStyles';
-import { Link, useNavigate } from 'react-router-dom'; // Adicione useNavigate
+import { Link, useNavigate } from 'react-router-dom';
 import { FaFacebook, FaInstagram, FaTwitter, FaYoutube } from 'react-icons/fa';
+import { API_BASE_URL } from '../config';
 
 const FooterContainer = styled.footer`
   background: ${theme.colors.secondary};
@@ -141,12 +142,12 @@ const Copyright = styled.div`
 export const Footer = () => {
   const [categories, setCategories] = useState([]);
   const [email, setEmail] = useState('');
-  const navigate = useNavigate(); // Hook para navegação programática
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('http://localhost:3001/categories');
+        const response = await fetch(`${API_BASE_URL}/categories`);
         if (!response.ok) {
           throw new Error('Erro ao buscar categorias');
         }
@@ -164,7 +165,7 @@ export const Footer = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch('http://localhost:3001/newsletter', {
+      const response = await fetch(`${API_BASE_URL}/newsletter`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -184,10 +185,9 @@ export const Footer = () => {
     }
   };
 
-  // Função para rolar a página para o topo ao clicar em um link
   const handleLinkClick = (to) => {
-    navigate(to); // Navega para a rota
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // Rola a página para o topo
+    navigate(to);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (

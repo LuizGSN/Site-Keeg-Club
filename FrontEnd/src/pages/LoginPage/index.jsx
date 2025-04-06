@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import axios from "axios";
 import { theme } from "../../GlobalStyles";
+import { API_BASE_URL } from "../../config";
 
 const Container = styled.div`
   display: flex;
@@ -53,7 +54,7 @@ const Button = styled.button`
   transition: background-color 0.3s ease;
 
   &:hover {
-    background: ${theme.colors.secondary};
+    background: ${theme.colors.dark};
   }
 `;
 
@@ -73,10 +74,12 @@ const LoginPage = () => {
     setErro("");
 
     try {
-      const res = await axios.post("http://localhost:3001/login", { email, senha });
-      localStorage.setItem("token", res.data.token);
+      const res = await axios.post(`${API_BASE_URL}/login`, { email, senha });
+      localStorage.setItem("token", res.data.accessToken);
+      console.log("Login bem-sucedido! Token:", res.data.accessToken);
       navigate("/admin");
     } catch (err) {
+      console.error("Erro no login:", err.response?.data);
       setErro("Credenciais inválidas. Tente novamente.");
     }
   };

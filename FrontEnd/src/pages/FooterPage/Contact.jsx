@@ -2,6 +2,7 @@ import styled from 'styled-components';
 import { theme } from '../../GlobalStyles';
 import { FaEnvelope, FaFacebook, FaInstagram, FaTwitter, FaYoutube } from 'react-icons/fa';
 import { useState } from 'react';
+import { API_BASE_URL } from '../../config';
 
 const Container = styled.div`
   max-width: ${theme.sizes.maxWidth};
@@ -141,8 +142,8 @@ export const Contact = () => {
     message: '',
   });
 
-  const [loading, setLoading] = useState(false); // Estado para controlar o carregamento
-  const [success, setSuccess] = useState(false); // Estado para indicar sucesso no envio
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -157,7 +158,7 @@ export const Contact = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3001/contact', {
+      const response = await fetch(`${API_BASE_URL}/contact`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -167,7 +168,7 @@ export const Contact = () => {
 
       if (response.ok) {
         setSuccess(true);
-        setFormData({ name: '', email: '', subject: '', message: '' }); // Limpa o formulário
+        setFormData({ name: '', email: '', subject: '', message: '' });
       } else {
         alert('Erro ao enviar a mensagem. Tente novamente.');
       }

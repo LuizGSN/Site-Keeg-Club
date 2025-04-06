@@ -2,7 +2,7 @@ import styled from 'styled-components';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { theme } from '../../GlobalStyles';
-import { FaSearch, FaTimes } from 'react-icons/fa'; // Ícones de pesquisa e fechar
+import { FaSearch, FaTimes } from 'react-icons/fa';
 
 const SearchContainer = styled.div`
   position: relative;
@@ -35,7 +35,7 @@ const SearchInput = styled.input`
     position: absolute;
     top: 100%;
     right: 0;
-    width: 200px; // Largura menor para telas pequenas
+    width: 200px;
     margin-top: 0.5rem;
   }
 `;
@@ -53,7 +53,7 @@ const SearchIcon = styled.div`
 
 export const SearchBar = () => {
   const [query, setQuery] = useState('');
-  const [isSearchOpen, setIsSearchOpen] = useState(false); // Estado para controlar a visibilidade da caixa de pesquisa
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleSearch = (e) => {
@@ -61,7 +61,7 @@ export const SearchBar = () => {
     if (query.trim()) {
       navigate(`/search?q=${encodeURIComponent(query)}`);
       setQuery('');
-      setIsSearchOpen(false); // Fecha a caixa de pesquisa após a busca
+      setIsSearchOpen(false);
     }
   };
 

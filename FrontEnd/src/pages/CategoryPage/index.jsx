@@ -4,6 +4,7 @@ import { PostCard } from '../HomePage/PostCard';
 import { theme } from '../../GlobalStyles';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../../config';
 
 const Container = styled.div`
   max-width: ${theme.sizes.maxWidth};
@@ -29,12 +30,11 @@ export const CategoryPage = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Carregar os posts da API com base na categoria
   useEffect(() => {
     const fetchCategoryPosts = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(`http://localhost:3001/posts?categoria=${category}`);
+        const response = await axios.get(`${API_BASE_URL}/posts?categoria=${category}`);
               
         if (response.data && Array.isArray(response.data.posts)) {
           setPosts(response.data.posts);
