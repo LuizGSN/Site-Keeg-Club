@@ -40,6 +40,11 @@ const upload = multer({ storage });
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  console.log("Auth header:", req.headers.authorization);
+  next();
+});
 
 // Rota para upload de imagens
 app.post('/upload', upload.single('file'), (req, res) => {
@@ -319,7 +324,6 @@ app.post("/register", async (req, res) => {
   }
 
   try {
-    // Verifica se o email já existe
     const userResult = await pool.query("SELECT * FROM usuarios WHERE email = $1", [email]);
     if (userResult.rows.length > 0) {
       return res.status(400).json({ erro: "Email já cadastrado" });
@@ -357,32 +361,32 @@ app.post("/login", async (req, res) => {
       return res.status(400).json({ erro: "Senha incorreta" });
     }
 
-    // Gerar access token (15 minutos)
     const accessToken = jwt.sign(
       { id: user.id, email: user.email }, 
       process.env.JWT_SECRET, 
       { expiresIn: '15m' }
     );
 
-    // Gerar refresh token (7 dias)
     const refreshToken = jwt.sign(
       { id: user.id }, 
       process.env.JWT_REFRESH_SECRET, 
       { expiresIn: '7d' }
     );
 
-    // Armazenar o refresh token no banco de dados
     await pool.query(
       "INSERT INTO refresh_tokens (token, user_id, expires_at) VALUES ($1, $2, NOW() + INTERVAL '7 days')",
       [refreshToken, user.id]
     );
 
-    res.json({ 
+    res.json({
+      success: true,
       accessToken, 
       refreshToken,
-      nome: user.nome, 
-      email: user.email,
-      expiresIn: 900 // 15 minutos em segundos
+      user: {
+        nome: user.nome,
+        email: user.email
+      },
+      expiresIn: 900
     });
   } catch (error) {
     res.status(500).json({ erro: error.message });
