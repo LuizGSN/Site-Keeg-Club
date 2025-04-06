@@ -293,7 +293,7 @@ const AdminPage = () => {
     <Container>
       <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
       <Title>
-        <img width={225} src="/src/images/Keeg-Club-Logo-Png.png" alt="Keeg Club logo" />
+        <img width={225} src="public/images/Keeg-Club-Logo-Png.png" alt="Keeg Club logo" />
       </Title>
       <Button onClick={handleCreatePost}>NOVA POSTAGEM</Button>
       <Button onClick={handleManageComments} style={{ marginLeft: '1rem' }}>GERENCIAR COMENTÁRIOS</Button>

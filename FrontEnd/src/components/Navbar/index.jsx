@@ -92,7 +92,7 @@ const MenuLink = styled(Link)`
 const IconsContainer = styled.div`
   display: flex;
   align-items: center;
-  gap: 1rem; // Espaçamento entre os ícones
+  gap: 1rem;
 `;
 
 const HamburgerIcon = styled.div`
@@ -126,7 +126,7 @@ export const Navbar = () => {
     <Nav>
       <NavContent>
         <Logo to="/" onClick={() => handleLinkClick('/')}>
-          <img src="/src/images/Keeg-Club-Logo-Png.png" alt="Keeg Club Logo" />
+          <img src="public/images/Keeg-Club-Logo-Png.png" alt="Keeg Club Logo" />
         </Logo>
         <Menu isOpen={isMenuOpen}>
           {categories.map((category) => (
