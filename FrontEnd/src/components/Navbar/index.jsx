@@ -126,7 +126,7 @@ export const Navbar = () => {
     <Nav>
       <NavContent>
         <Logo to="/" onClick={() => handleLinkClick('/')}>
-          <img src="public/images/Keeg-Club-Logo-Png.png" alt="Keeg Club Logo" />
+          <img src="/images/Keeg-Club-Logo-Png.png" alt="Keeg Club Logo" />
         </Logo>
         <Menu isOpen={isMenuOpen}>
           {categories.map((category) => (
