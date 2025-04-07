@@ -46,6 +46,14 @@ app.use((req, res, next) => {
   next();
 });
 
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'online',
+    db: 'connected',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Rota para upload de imagens
 app.post('/upload', upload.single('file'), (req, res) => {
   if (!req.file) {
@@ -79,6 +87,12 @@ const verificaToken = (req, res, next) => {
     next();
   });
 };
+
+const rateLimit = require('express-rate-limit');
+app.use('/login', rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5
+}));
 
 // Rota para verificar token
 app.get("/auth/verify", verificaToken, async (req, res) => {
@@ -163,7 +177,7 @@ app.get("/posts", async (req, res) => {
   }
 
   if (q) {
-    conditions.push("(titulo LIKE $1 OR resumo LIKE $1 OR categoria LIKE $1)");
+    conditions.push("(titulo ILIKE $1 OR resumo ILIKE $1 OR categoria ILIKE $1)");
     params.push(`%${q}%`);
   }
 
@@ -393,7 +407,6 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// Rota para obter novo access token usando refresh token
 app.post("/refresh-token", async (req, res) => {
   const { refreshToken } = req.body;
 
@@ -402,7 +415,6 @@ app.post("/refresh-token", async (req, res) => {
   }
 
   try {
-    // Verificar se o refresh token existe e é válido
     const tokenResult = await pool.query(
       "SELECT * FROM refresh_tokens WHERE token = $1 AND expires_at > NOW()",
       [refreshToken]
@@ -414,7 +426,6 @@ app.post("/refresh-token", async (req, res) => {
 
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
 
-    // Gerar novo access token
     const newAccessToken = jwt.sign(
       { id: decoded.id }, 
       process.env.JWT_SECRET, 
