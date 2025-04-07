@@ -5,6 +5,7 @@ import { API_BASE_URL } from '../../config';
 
 const Card = styled.article`
   background: ${theme.colors.tertiary};
+  border: 0.5px solid #ca5b112d;
   border-radius: 8px;
   overflow: hidden;
   transition: transform 0.3s, box-shadow 0.3s;
