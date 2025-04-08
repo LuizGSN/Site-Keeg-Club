@@ -18,6 +18,7 @@ import { TermsOfUse } from './pages/FooterPage/TermsOfUse';
 import { About } from './pages/FooterPage/About';
 import { Contact } from './pages/FooterPage/Contact';
 import AdminCommentsPage from './pages/AdminPage/AdminCommentsPage'
+import { Analytics } from '@vercel/analytics/react';
 
 function App() {
   const location = useLocation();
@@ -58,7 +59,9 @@ function App() {
         </Routes>
       </main>
       {!hideNavbarAndFooter && <Footer />}
+      <Analytics />
     </ThemeProvider>
+    
   );
 }
 
@@ -67,6 +70,7 @@ function AppWrapper() {
     <Router basename="/">
       <App />
     </Router>
+    
   );
 }
 
